@@ -1,2 +1,2 @@
-test:
-	g++ main.cpp src/vmc.cpp -I include/ -O2 -o main.exe && ./main.exe && rm main.exe
+build:
+	g++ main.cpp src/vmc.cpp -I include/ -larmadillo -O2 -o main.exe 
