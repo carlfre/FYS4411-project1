@@ -3,6 +3,9 @@
 #include <armadillo>
 #include <cmath>
 #include <chrono>
+#include <string>
+#include <fstream>
+#include <vector>
 
 //function to calculate the local energy 
 double local_energy(arma::mat position, double alpha);
