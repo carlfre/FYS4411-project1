@@ -43,7 +43,7 @@ void monte_carlo(int MC_cycles, double step, int N_particles, int N_dimensions){
     uniform_real_distribution<double> rng_double(0,1);
 
     mat position = mat(N_particles, N_dimensions).fill(0.0); //initialize all particles at the origin
-    mat stepping_matrix = mat(N_particles, N_dimensions).fill(0.5); //matrix filled with 0.5 to get rand(-0.5, 0.5) = rand(0, 1) - 0.5
+    vec stepping_vector = vec(N_dimensions).fill(0.5); //vector filled with 0.5 to get rand(-0.5, 0.5) = rand(0, 1) - 0.5
 
     vec alpha_values = arma::linspace(0.1, 1.0, 10);
     for (int i = 0; i < alpha_values.size(); i++){
@@ -52,11 +52,17 @@ void monte_carlo(int MC_cycles, double step, int N_particles, int N_dimensions){
         double energy = 0.0;
         double energy_squared = 0.0;
         for (int j = 0; j < MC_cycles; j++){
-            mat random_walk = mat(N_particles, N_dimensions).randu() - stepping_matrix;
-            mat new_position = position + step*random_walk;
-            double ratio = probability_ratio(position, new_position, alpha);
-            if (rng_double(generator) <= ratio){
-                position = new_position;
+            //loop over MC cycles
+            for (int k = 0; k < N_particles; k++){
+                //loop over particles
+                vec random_walk = vec(N_dimensions).randu() - stepping_vector;
+                mat new_position = position;
+                new_position.row(k) += step*random_walk.t(); //move particle k with a random walk
+                double ratio = probability_ratio(position, new_position, alpha);
+                if (rng_double(generator) <= ratio){
+                    //check whether or not to move particle k
+                    position = new_position;
+                }
             }
             double new_energy = local_energy(position, alpha);
             energy += new_energy;
