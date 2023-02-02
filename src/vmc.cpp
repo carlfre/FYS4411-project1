@@ -26,7 +26,36 @@ double probability_ratio(mat old_position, mat new_position, double alpha){
     return min(exp(2*alpha*exponent), 1.0);
 }
 
-void monte_carlo(int MC_cycles, double step, int N_particles, int N_dimensions){
+// quantum force - untested
+mat quantum_force(mat& position, int index, double alpha){
+
+    // expression: 2* grad psi_T / psi_T
+    // for non-interactive case, simplifies to -4*alpha*position
+
+    // create matrix with same dimensions as position, but with all zeros
+    mat force;
+    force.zeros(position.n_rows, position.n_cols);
+
+    // set force for particle index
+    force.row(index) = -4*alpha*position.row(index);
+    return force;
+}
+
+double greens_ratio(mat& qf_old, mat& qf_new, mat& position_old, mat& position_new, double step, double D, int index){
+    // print dimensions of matrix
+    double exponent = 0.0;
+    for (int j=0; j<qf_old.n_cols; j++){
+        double term = (0.5
+                        * (qf_old(index, j) + qf_new(index, j))
+                        * (D * step * 0.5 * (qf_old(index, j) - qf_new(index, j)) 
+                            + position_old(index, j) - position_new(index, j)));
+        exponent += term;
+    }
+    return exp(exponent);
+}
+
+
+void monte_carlo(int MC_cycles, double step, int N_particles, int N_dimensions, bool importance_sampling){
     
     //prepare output file
     string filename = "output/N="+ to_string(N_particles) + "_d=" + to_string(N_dimensions) + "_energy.csv";
@@ -46,11 +75,14 @@ void monte_carlo(int MC_cycles, double step, int N_particles, int N_dimensions){
     vec stepping_vector = vec(N_dimensions).fill(0.5); //vector filled with 0.5 to get rand(-0.5, 0.5) = rand(0, 1) - 0.5
 
     vec alpha_values = arma::linspace(0.1, 1.0, 10);
+
+    double D = 0.5; // diffusion constant for importance sampling
     for (int i = 0; i < alpha_values.size(); i++){
         //loop over alpha values
         double alpha = alpha_values[i];
         double energy = 0.0;
         double energy_squared = 0.0;
+        cout << "alpha: " << alpha << endl;
         for (int j = 0; j < MC_cycles; j++){
             //loop over MC cycles
             for (int k = 0; k < N_particles; k++){
@@ -58,7 +90,22 @@ void monte_carlo(int MC_cycles, double step, int N_particles, int N_dimensions){
                 vec random_walk = vec(N_dimensions).randu() - stepping_vector;
                 mat new_position = position;
                 new_position.row(k) += step*random_walk.t(); //move particle k with a random walk
-                double ratio = probability_ratio(position, new_position, alpha);
+
+                double greens = 1.0;
+                if (importance_sampling){
+                    mat qf = quantum_force(position, k, alpha);
+                    qf.print();
+                    position.print();
+                    new_position += D * qf * step;
+
+                    mat qf_new = quantum_force(new_position, k, alpha);
+                    greens = greens_ratio(qf, qf_new, position, new_position, step, D, k);
+
+                    cout << "greens: " << greens << endl;
+                }
+
+                double ratio = greens * probability_ratio(position, new_position, alpha);
+
                 if (rng_double(generator) <= ratio){
                     //check whether or not to move particle k
                     position = new_position;
@@ -76,3 +123,6 @@ void monte_carlo(int MC_cycles, double step, int N_particles, int N_dimensions){
     ofile.close();
 }
 
+void monte_carlo(int MC_cycles, double step, int N_particles, int N_dimensions){
+    monte_carlo(MC_cycles, step, N_particles, N_dimensions, false);
+}
