@@ -12,7 +12,7 @@ int main(int argc, char *argv[]){
     int N_dimensions = atoi(argv[2]);
     int MC_cycles = pow(10, atoi(argv[3]));
     double time_step = atof(argv[5]);
-    double learning_rate = atof(argv[6]);
+    double learning_rate = pow(10, atof(argv[6]));
     int max_iter = atoi(argv[7]);
     bool importance_sampling;
     if (atoi(argv[4]) == 0){

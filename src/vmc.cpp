@@ -10,8 +10,8 @@ double local_energy(mat& position, double alpha){
     return energy;
 }
 
-double probability_ratio(mat& old_position, mat& new_position, double alpha){
-    double exponent = accu(old_position%old_position) - accu(new_position%new_position);
+double probability_ratio(mat& old_position, mat& new_position, double alpha, int index){
+    double exponent = accu(old_position.col(index)%old_position.col(index)) - accu(new_position.col(index)%new_position.col(index));
     //accu(A%A) is elementwise multiplication and sum over all elements
 
     return exp(2*alpha*exponent);
@@ -77,7 +77,7 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
                 new_position.col(k) = position.col(k) + step*random_walk; //move particle k with a random walk
             }
 
-            double ratio = greens * probability_ratio(position, new_position, alpha);
+            double ratio = greens * probability_ratio(position, new_position, alpha, k);
 
             if (rng_double(generator) <= ratio){
                 //check whether or not to move particle k
@@ -132,15 +132,17 @@ void minimize_parameters(int MC_cycles, double step, int N_particles, int N_dime
     ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << old_energy << "," << energy_variance << endl;
 
     alpha -= learning_rate*result[2];
-    result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step);
     
+    result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step);
     double new_energy = result[0];
     energy_variance = result[1];
+
     ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << new_energy << "," << energy_variance << endl;
+
     alpha -= learning_rate*result[2];
-    
+
     int iter = 0;
-    while (iter < max_iter and energy_variance > 0.0001){
+    while (iter < max_iter and abs(old_energy - new_energy) > 0.0001){
         result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step);
         alpha -= learning_rate*result[2];
         old_energy = new_energy; //update old energy
@@ -152,9 +154,16 @@ void minimize_parameters(int MC_cycles, double step, int N_particles, int N_dime
     }
 
     ofile.close();
-    cout << "alpha: " << alpha << endl;
-    cout << "new_energy: " << new_energy << endl;
-    cout << "old_energy: " << old_energy << endl;
-    cout << "variance: " << energy_variance << endl;
-    cout << "iterations: " << iter << endl;
+    if (iter == max_iter){
+        cout << "Did not converge after " << iter << " iterations. The final parameters are:" << endl;
+        cout << "alpha: " << alpha << endl;
+        cout << "energy: " << new_energy << endl;
+        cout << "variance: " << energy_variance << endl;
+    }
+    else{
+        cout << "Converged after " << iter << " iterations. The final parameters are:" << endl;
+        cout << "alpha: " << alpha << endl;
+        cout << "energy: " << new_energy << endl;
+        cout << "variance: " << energy_variance << endl;
+    }
 }
