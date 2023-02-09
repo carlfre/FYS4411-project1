@@ -1,28 +1,143 @@
 #include "include/vmc.hpp"
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <fstream>
+#include <vector>
 using namespace arma;
 using namespace std;
 
 int main(int argc, char *argv[]){
-    if (argc != 8){
-        cout << "Usage: ./main number_of_particles number_of_dimensions order_of_MC_cycles important_sampling time_step learning_rate max_iter" << endl;
+    if (argc != 3){
+        cout << "Usage: task config_file_name " << endl;
         exit(1);
     }
-    double step = 1.0;
-    int N_particles = atoi(argv[1]);
-    int N_dimensions = atoi(argv[2]);
-    int MC_cycles = pow(10, atoi(argv[3]));
-    double time_step = atof(argv[5]);
-    double learning_rate = pow(10, atof(argv[6]));
-    int max_iter = atoi(argv[7]);
-    bool importance_sampling;
-    if (atoi(argv[4]) == 0){
-        importance_sampling = false;
-        cout << "No importance sampling" << endl;
+    string task = string(argv[1]);
+    string filename = "configs/" + string(argv[2]);
+    // A vector of vectors to store the the rows in the input file
+    vector<double> input_data;
+
+    // Create a filestream instance "myfile" and use it to read the file
+    fstream myfile;
+    myfile.open(filename, ios::in);
+    if (myfile.is_open()){  // This checks that the file was opened OK
+        // Some temporary variables we'll use
+        string line;
+        double param;
+        // Read file line by line
+        while (getline(myfile, line)){
+        // Skip lines with "#" at the first position
+        if (line.at(0) == '#'){
+            continue;
+        }
+        else{
+            // Parse the string (line) and interpret it as one variable
+            stringstream mysstream(line);
+            mysstream >> param;
+            input_data.push_back(param);
+      }
     }
-    else if (atoi(argv[4]) == 1){
-        importance_sampling = true;
-        cout << "Importance sampling" << endl;
-    }
-    minimize_parameters(MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, learning_rate, max_iter);
-    return 0;
+  }
+  else{
+    cout << "Unable to open the file " << filename << endl;
+    exit(1);
+  }
+  // Close the input file
+  myfile.close();
+  if (task == "numerical"){
+      double step = 1.0;
+      if (input_data.size() != 6){
+          cout << "Wrong number of parameters in config file" << endl;
+          exit(1);
+      }
+      int N_particles = input_data[0];
+      int N_dimensions = input_data[1];
+      int MC_cycles = pow(10, input_data[2]);
+      double ndd_h = input_data[3];
+      bool importance_sampling;
+      double time_step = input_data[5];
+      string filename;
+      if (input_data[4] == 0){
+          importance_sampling = false;
+          cout << "No importance sampling" << endl;
+          filename = "output/N=" + to_string(N_particles) +
+                            "_d=" + to_string(N_dimensions) + "_num.csv";   
+      }
+      else{
+          importance_sampling = true;
+          filename = "output/numerical_N=" + to_string(N_particles) +
+                            "_d=" + to_string(N_dimensions) + "num_IS.csv";
+          cout << "Importance sampling" << endl;
+      }
+      ofstream ofile;
+      ofile.open(filename);
+      ofile << "MC,N,d,alpha,energy,variance" << endl;
+      vec alpha_values = linspace(0.1, 1.0, 10);
+      for (double alpha : alpha_values){
+          vec result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, true, ndd_h);
+          ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << result[0] << "," << result[1] << endl;
+       }
+ 
+  }
+  else if(task == "analytical"){
+      double step = 1.0;
+      if (input_data.size() != 5){
+          cout << "Wrong number of parameters in config file" << endl;
+          exit(1);
+      }
+      int MC_cycles = pow(10, input_data[0]);
+      int N_particles = input_data[1];
+      int N_dimensions = input_data[2];
+      double time_step = input_data[4];
+      bool importance_sampling = (bool) input_data[3];
+      string filename;
+      if (input_data[3] == 0){
+          importance_sampling = false;
+          cout << "No importance sampling" << endl;
+          filename = "output/N=" + to_string(N_particles) +
+                            "_d=" + to_string(N_dimensions) + "_ana.csv";   
+      }
+      else{
+          importance_sampling = true;
+          filename = "output/N=" + to_string(N_particles) +
+                            "_d=" + to_string(N_dimensions) + "_ana_IS.csv";
+          cout << "Importance sampling" << endl;
+      }
+      ofstream ofile;
+      ofile.open(filename);
+      ofile << "MC,N,d,alpha,energy,variance" << endl;
+      vec alpha_values = linspace(0.1, 1.0, 10);
+      for (double alpha : alpha_values){
+          vec result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step);
+          ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << result[0] << "," << result[1] << endl;
+       }
+  }
+  else if(task == "gradient"){
+      if (input_data.size() != 7){
+          cout << "Wrong number of parameters in config file" << endl;
+          exit(1);
+      }
+      double step = 1.0;
+      int MC_cycles = pow(10, input_data[0]);
+      int N_particles = input_data[1];
+      int N_dimensions = input_data[2];
+      double time_step = input_data[4];
+      double learning_rate = pow(10, input_data[5]);
+      int max_iter = input_data[6];
+      bool importance_sampling = (bool) input_data[3];
+      if (input_data[4] == 0){
+          importance_sampling = false;
+          cout << "No importance sampling" << endl;
+      }
+      else if (input_data[4] == 1){
+          importance_sampling = true;
+          cout << "Importance sampling" << endl;
+      }
+      minimize_parameters(MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, learning_rate, max_iter);
+  }
+  else{
+      cout << "Unknown task" << endl;
+  }
+  return 0;
 }
+

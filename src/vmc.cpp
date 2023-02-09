@@ -17,6 +17,42 @@ double probability_ratio(mat& old_position, mat& new_position, double alpha, int
     return exp(2*alpha*exponent);
 }
 
+
+double trial_wavefunction(mat& position, double alpha){
+    double exponent = accu(position%position);
+    //accu(A%A) is elementwise multiplication and sum over all elements
+    return exp(-alpha*exponent);
+}
+
+double numerical_double_derivative(mat& position, double alpha, double h, int dimension_index, int particle_index){
+    double wf_mid = trial_wavefunction(position, alpha);
+    //move particle in dimension dimension_index h forwards
+    position(dimension_index, particle_index) += h;
+    double wf_plus = trial_wavefunction(position, alpha);
+    //move particle in dimension dimension_index h backwards
+    position(dimension_index, particle_index) -= 2*h;
+    double wf_minus = trial_wavefunction(position, alpha);
+    //move particle back to original position
+    position(dimension_index, particle_index) += h;
+    double double_derivative = (wf_plus - 2*wf_mid + wf_minus)/(h*h);
+    return double_derivative;
+}
+
+double local_energy_numerical(mat& position, double alpha, double h){
+    double energy = 0;
+    for (int i = 0; i < position.n_cols; i++){
+        for (int j = 0; j < position.n_rows; j++){
+            //kinetic energy
+            energy += -0.5*numerical_double_derivative(position, alpha, h, j, i);
+            //potential energy
+        }
+    }
+    energy /= trial_wavefunction(position, alpha);
+    energy += 0.5*accu(position%position);
+    return energy;
+}
+
+
 // quantum force - untested
 vec quantum_force(mat& position, int index, double alpha){
 
@@ -35,8 +71,12 @@ double greens_ratio(vec& qf_old, vec& qf_new, mat& position_old, mat& position_n
     return exp(exponent);
 }
 
-
 vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step){
+    //default is non-numerical double derivative
+    return monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, false, -1.0);
+}
+
+vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, bool numerical_double_derivative, double ndd_h){
     //initialize the random number generator
     unsigned int seed = chrono::system_clock::now().time_since_epoch().count();
     mt19937 generator;
@@ -57,6 +97,7 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
     double der_wf = 0.0;
     double der_wf_energy = 0.0;
     double new_der_wf = 0.0;
+    int accepted_moves = 0;
     for (int j = 0; j < MC_cycles; j++){
         //loop over MC cycles
         for (int k = 0; k < N_particles; k++){
@@ -80,9 +121,15 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
             double ratio = greens * probability_ratio(position, new_position, alpha, k);
 
             if (rng_double(generator) <= ratio){
+                accepted_moves += 1;
                 //check whether or not to move particle k
                 position.col(k) = new_position.col(k);
-                new_energy = local_energy(position, alpha); //update new energy
+                if (numerical_double_derivative){
+                    new_energy = local_energy_numerical(position, alpha, ndd_h);
+                }
+                else{
+                    new_energy = local_energy(position, alpha);
+                }
                 new_der_wf = dwf_dalpha(new_position); //update new derivative of wave function
             }
             else{
@@ -103,6 +150,7 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
     der_wf_energy = der_wf_energy/MC_cycles;
     double alpha_derivative = 2*(der_wf_energy - der_wf*energy);
     vec result = {energy, energy_variance, alpha_derivative};
+    //cout << "fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*MC_cycles) << endl;
     return result;
 }
 
