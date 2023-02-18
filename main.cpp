@@ -1,4 +1,5 @@
 #include "include/vmc.hpp"
+#include "include/interaction.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -14,14 +15,11 @@ int main(int argc, char *argv[]){
     }
     string task = string(argv[1]);
     string filename = "configs/" + string(argv[2]);
-    // A vector of vectors to store the the rows in the input file
+    // A vector of vectors to store the the values in the input file
     vector<double> input_data;
-
-    // Create a filestream instance "myfile" and use it to read the file
     fstream myfile;
     myfile.open(filename, ios::in);
     if (myfile.is_open()){  // This checks that the file was opened OK
-        // Some temporary variables we'll use
         string line;
         double param;
         // Read file line by line
@@ -80,7 +78,7 @@ int main(int argc, char *argv[]){
  
   }
   else if(task == "analytical"){
-      double step = 1.0;
+      double step = 1.5;
       if (input_data.size() != 5){
           cout << "Wrong number of parameters in config file" << endl;
           exit(1);
@@ -134,6 +132,42 @@ int main(int argc, char *argv[]){
           cout << "Importance sampling" << endl;
       }
       minimize_parameters(MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, learning_rate, max_iter);
+  }
+  else if(task == "interactions"){
+    if (input_data.size() != 6){
+        cout << "Wrong number of parameters in config file" << endl;
+        exit(1);
+    }
+    int MC_cycles = pow(10, input_data[0]);
+    int N_particles = input_data[1];
+    int N_dimensions = input_data[2];
+    bool importance_sampling = (bool) input_data[3];
+    double time_step = input_data[4];
+    double step = input_data[5];
+    bool interactions = true;
+    double gamma = 2.82843;
+    double beta = 2.82843;
+    double hard_core_radius = 0.0043;
+    if (input_data[3] == 0){
+          importance_sampling = false;
+          cout << "No importance sampling" << endl;
+          filename = "output/N=" + to_string(N_particles) +
+                            "_d=" + to_string(N_dimensions) + "_int.csv";   
+      }
+    else{
+          importance_sampling = true;
+          filename = "output/N=" + to_string(N_particles) +
+                            "_d=" + to_string(N_dimensions) + "_int_IS.csv";
+          cout << "Importance sampling" << endl;
+    }
+    ofstream ofile;
+    ofile.open(filename);
+    ofile << "MC,N,d,alpha,energy,variance" << endl;
+    vec alpha_values = linspace(0.1, 1.0, 10);
+    for (double alpha : alpha_values){
+        vec result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, interactions, gamma, beta, hard_core_radius);
+        ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << result[0] << "," << result[1] << endl;
+    }
   }
   else{
       cout << "Unknown task" << endl;

@@ -1,9 +1,9 @@
 # Number of particles
-10
+500
 # Number of dimensions
-2
+3
 # Order of MC cycles
-5
+4
 # Length for derivation
 0.001
 # Bool for importance sampling 

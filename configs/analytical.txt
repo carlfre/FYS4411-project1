@@ -1,10 +1,10 @@
 # Order of MC cycles
-2
+4
 # Number of particles
 500
 # Number of dimensions
 3
 # Bool for importance sampling
-1
+0
 # Time step for importance sampling
-0.1
+0.5

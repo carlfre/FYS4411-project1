@@ -1,14 +1,12 @@
 # Order of MC cycles
-3
+2
 # Number of particles
-500
+100
 # Number of dimensions
 3
 # Bool for importance sampling
-1
+0
 # Time step for importance sampling
-0.1
-# Order of learning rate for gradient descent
--6
-# Max iterations for gradient descent
-500
+0.5
+# Step size for brute force sampling 
+0.7
