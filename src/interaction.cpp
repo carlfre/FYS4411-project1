@@ -59,6 +59,17 @@ double local_energy_naive(mat& position, mat& relative_position, double alpha, d
     double kinetic_energy = 0;
     double potential_energy = 0;
     assert(relative_position.is_trimatl());
+    //check if any particles are too close to each other
+    for (int k = 0; k < position.n_cols; k++){
+        for (int l = 0; l < position.n_cols; l++){
+            if (k != l){
+                if (max(relative_position.col(k)(l), relative_position.col(l)(k)) < hard_core_radius){
+                    //cout << "Particles too close to each other" << endl;
+                    return 0.0;
+                }
+            }
+        }
+    }
     for (int k = 0; k < position.n_cols; k++){
         vec r_k = position.col(k);
         kinetic_energy += -2*alpha*(beta + 2);
@@ -125,11 +136,14 @@ double probability_ratio_naive(mat& old_position, mat& new_position, mat& relati
                 - (r_k_old(0)*r_k_old(0) + r_k_old(1)*r_k_old(1) + beta*r_k_old(2)*r_k_old(2));
     ratio *= exp(-2*alpha*exponent);
 
-    for (int j = particle_index + 1; j < old_position.n_cols; j++){
-        double r_old = max(relative_position.col(particle_index)(j), relative_position.col(j)(particle_index));
-        double r_new = max(relative_position_new.col(particle_index)(j), relative_position_new.col(j)(particle_index));
-        double H = r_old*(r_new - hard_core_radius)/(r_new*(r_old - hard_core_radius));
-        ratio *= H*H;
+    for (int j = 0; j < old_position.n_cols; j++){
+        if (j != particle_index){
+            double r_old = max(relative_position.col(particle_index)(j), relative_position.col(j)(particle_index));
+            double r_new = max(relative_position_new.col(particle_index)(j), relative_position_new.col(j)(particle_index));
+            double H = r_old*(r_new - hard_core_radius)/(r_new*(r_old - hard_core_radius));
+            ratio *= H*H;
+        }
     }
+    //cout << "ratio: " << ratio << endl;
     return ratio;
 }
