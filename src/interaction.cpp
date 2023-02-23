@@ -59,17 +59,7 @@ double local_energy_naive(mat& position, mat& relative_position, double alpha, d
     double kinetic_energy = 0;
     double potential_energy = 0;
     assert(relative_position.is_trimatl());
-    //check if any particles are too close to each other
-    for (int k = 0; k < position.n_cols; k++){
-        for (int l = 0; l < position.n_cols; l++){
-            if (k != l){
-                if (max(relative_position.col(k)(l), relative_position.col(l)(k)) < hard_core_radius){
-                    //cout << "Particles too close to each other" << endl;
-                    return 0.0;
-                }
-            }
-        }
-    }
+    
     for (int k = 0; k < position.n_cols; k++){
         vec r_k = position.col(k);
         kinetic_energy += -2*alpha*(beta + 2);
@@ -146,4 +136,39 @@ double probability_ratio_naive(mat& old_position, mat& new_position, mat& relati
     }
     //cout << "ratio: " << ratio << endl;
     return ratio;
+}
+
+vec quantum_force_naive(mat& position, mat& relative_position, double alpha, double beta, double hard_core_radius, int particle_index){
+    vec r_k = position.col(particle_index);
+    vec qf = {r_k[0], r_k[1], beta*r_k[2]};
+    qf *= -4*alpha;
+    for (int l = 0; l < position.n_cols; l++){
+        if (l != particle_index){
+            vec r_l = position.col(l);
+            double r_kl = max(relative_position.col(particle_index)(l), relative_position.col(l)(particle_index));
+            assert(r_kl != 0);
+            assert(r_kl > hard_core_radius);
+            double H_kl = hard_core_radius/(r_kl*r_kl*(r_kl-hard_core_radius));
+            qf += 2*H_kl*(r_k - r_l);
+        }
+    }
+    return qf;
+}
+
+void set_initial_state(mat& position, mat& relative_position, int N_particles, int N_dimensions, double hard_core_radius){
+    int spread = 50;
+    position = spread*hard_core_radius*(mat(N_dimensions, N_particles).randu() - 0.5); //initialize all particles at random positions
+    relative_position = trimatl(relative_position, 1); //strict lower triangular matrix to store relative positions
+    for (int i = 0; i < N_particles; i++){
+        vec r_i = position.col(i);
+        for (int j = i + 1; j < N_particles; j++){
+            double rel_pos = norm(r_i - position.col(j));
+            while (rel_pos < hard_core_radius){
+                //if two particles are too close, get new random positions
+                position.col(j) = spread*hard_core_radius*(vec(N_dimensions).randu() - 0.5);
+                rel_pos = norm(r_i - position.col(j));    
+            }
+            relative_position(j, i) = rel_pos;
+        }
+    }
 }

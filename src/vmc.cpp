@@ -94,27 +94,11 @@ void sampling(mat& position, mat& new_position, double alpha, int k, double step
     int N_dimensions = position.n_rows;
     int N_particles = position.n_cols;
     if (importance_sampling){
-        vec qf = quantum_force(position, k, alpha);
-        vec gaussian_random = vec(N_dimensions).randn();
-        new_position.col(k) = position.col(k) + D * qf * time_step + gaussian_random*sqrt(time_step);
-
-        vec qf_new = quantum_force(new_position, k, alpha);
-        greens = greens_ratio(qf, qf_new, position, new_position, time_step, D, k);
-        ratio = greens * probability_ratio(position, new_position, alpha, k);
-        if (random_number <= ratio){
-            accepted_moves += 1;
-            //check whether or not to move particle k
-            position.col(k) = new_position.col(k);
-        }
-        else{
-            new_position.col(k) = position.col(k); //move particle k back to original position
-        }
-    }
-    else{
-        if (interactions){  
-            //interaction case
-            vec random_walk = vec(N_dimensions).randu() - stepping_vector;
-            new_position.col(k) = position.col(k) + step*random_walk; //move particle k with a random walk
+        if (interactions){
+            //importance sampling for interactive case
+            vec qf = quantum_force_naive(position, relative_position, alpha, beta, hard_core_radius, k);
+            vec gaussian_random = vec(N_dimensions).randn();
+            new_position.col(k) = position.col(k) + D * qf * time_step + gaussian_random*sqrt(time_step);
             double rel_pos = 0.0;
             for (int i = 0; i < N_particles; i++ ){
                 if (i != k){
@@ -129,7 +113,62 @@ void sampling(mat& position, mat& new_position, double alpha, int k, double step
                     }
                 }
             }
-            ratio = probability_ratio_naive(position, position, relative_position, relative_position_new, alpha, beta, hard_core_radius, k);
+            vec qf_new = quantum_force_naive(new_position, relative_position_new, alpha, beta, hard_core_radius, k);
+            greens = greens_ratio(qf, qf_new, position, new_position, time_step, D, k);
+            //cout << "greens: " << greens << endl;
+            ratio = greens * probability_ratio_naive(position, position, relative_position, relative_position_new, alpha, beta, hard_core_radius, k);
+            //cout << "ratio: " << ratio << endl;
+            if (random_number <= ratio){
+                accepted_moves += 1;
+                //check whether or not to move particle k
+                position.col(k) = new_position.col(k);
+                relative_position = relative_position_new;
+            }
+            else{
+                new_position.col(k) = position.col(k); //move particle k back to original position
+                relative_position_new = relative_position;
+            }
+        }
+
+        else{
+            //importance sampling for non-interactive case
+            vec qf = quantum_force(position, k, alpha);
+            vec gaussian_random = vec(N_dimensions).randn();
+            new_position.col(k) = position.col(k) + D * qf * time_step + gaussian_random*sqrt(time_step);
+
+            vec qf_new = quantum_force(new_position, k, alpha);
+            greens = greens_ratio(qf, qf_new, position, new_position, time_step, D, k);
+            ratio = greens * probability_ratio(position, new_position, alpha, k);
+            if (random_number <= ratio){
+                accepted_moves += 1;
+                //check whether or not to move particle k
+                position.col(k) = new_position.col(k);
+            }
+            else{
+                new_position.col(k) = position.col(k); //move particle k back to original position
+            }
+        }
+    }
+    else{
+        if (interactions){  
+            //brute force for interaction case
+            vec random_walk = vec(N_dimensions).randu() - stepping_vector;
+            new_position.col(k) = position.col(k) + step*random_walk; //move particle k with a random walk
+            double rel_pos = 0.0;
+            for (int i = 0; i < N_particles; i++ ){
+                if (i != k){
+                    rel_pos = norm(new_position.col(k) - new_position.col(i));
+                    if (rel_pos < hard_core_radius){ //if particles are too close, reject move
+                        new_position.col(k) = position.col(k); //move particle k back to original position
+                        relative_position_new = relative_position;
+                        return; //break out of function
+                    }
+                    else{
+                        relative_position_new(max(i, k), min(i, k)) = rel_pos;
+                    }
+                }
+            }
+            ratio = probability_ratio_naive(position, new_position, relative_position, relative_position_new, alpha, beta, hard_core_radius, k);
             if (random_number <= ratio){
                 accepted_moves += 1;
                 //check whether or not to move particle k
@@ -143,6 +182,7 @@ void sampling(mat& position, mat& new_position, double alpha, int k, double step
 
         }
         else{
+            //brute force for non-interaction case
             vec random_walk = vec(N_dimensions).randu() - stepping_vector;
             new_position.col(k) = position.col(k) + step*random_walk; //move particle k with a random walk
             ratio = probability_ratio(position, new_position, alpha, k);
@@ -165,40 +205,42 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
     
     arma::arma_rng::set_seed_random();
     uniform_real_distribution<double> rng_double(0,1);
-    mat position;
+    mat position = mat(N_dimensions, N_particles);
     mat relative_position = mat(N_particles, N_particles).fill(0.0); 
     if (interactions){
-        position = 2*hard_core_radius*(mat(N_dimensions, N_particles).randu() - 0.5); //initialize all particles at random positions
-        //position = mat(N_dimensions, N_particles).randu() - 0.5; 
-        relative_position = trimatl(relative_position, 1); //strict lower triangular matrix to store relative positions
+        set_initial_state(position, relative_position, N_particles, N_dimensions, hard_core_radius);
+        /*
+        position = 1000*hard_core_radius*(mat(N_dimensions, N_particles).randu() - 0.5); //initialize all particles at random positions
+        position = mat(N_dimensions, N_particles).randu() - 0.5; 
         for (int i = 0; i < relative_position.n_cols; i++){
             for (int j = i + 1; j < relative_position.n_rows; j++){
                 relative_position(j, i) = norm(position.col(i) - position.col(j));
             }
-        }
+        }*/    
     }
     else{
          position = mat(N_dimensions, N_particles).fill(0.0); //initialize all particles at the origin 
+         //not necessary to equilibrate the system as it starts out in the most probable state
     }
-    //relative_position.print();
-    
-    mat new_position = position; //initialize all particles at the origin 
+    mat new_position = position;
     mat relative_position_new = relative_position;
     vec stepping_vector = vec(N_dimensions).fill(0.5); //vector filled with 0.5 to get rand(-0.5, 0.5) = rand(0, 1) - 0.5
     double D = 0.5; // diffusion constant for importance sampling
-    int accepted_moves = 0;
     // to equilibrate the system
-    for (int j = 0; j < 1000000; j++){
-        for (int k = 0; k < N_particles; k++){
-            double random_number = rng_double(generator);
-            sampling(position, new_position, alpha, k, step, time_step, D, importance_sampling, accepted_moves, stepping_vector, random_number, interactions, relative_position, relative_position_new, gamma, beta, hard_core_radius);
+    int accepted_moves = 0; //number of accepted moves
+    if (interactions){
+        //not necessary to equilibrate the system for the non-interactive case as it starts out in the most probable state
+        int N_equilibration = 100000;
+        for (int j = 0; j < N_equilibration; j++){
+            for (int k = 0; k < N_particles; k++){
+                double random_number = rng_double(generator);
+                sampling(position, new_position, alpha, k, step, time_step, D, importance_sampling, accepted_moves, stepping_vector, random_number, interactions, relative_position, relative_position_new, gamma, beta, hard_core_radius);
+            }
         }
+        //relative_position.print();
+        cout << "Equilibration done" << endl;
+        cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
     }
-    //relative_position.print();
-    cout << "Equilibration done" << endl;
-    cout << "Accepted moves: " << accepted_moves << endl;
-    
-    
     double energy = 0.0; //accumulator for the energy
     double energy_squared = 0.0; //accumulator for the energy squared
     double new_energy = 0.0; //storing the local energy
@@ -207,7 +249,7 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
     double new_der_wf = 0.0; //storing the current derivative of wf
     
     double der_wf_energy = 0.0;
-    accepted_moves = 0;
+    accepted_moves = 0; //reset the number of accepted moves after equilibration
     for (int j = 0; j < MC_cycles; j++){
         //loop over MC cycles
         for (int k = 0; k < N_particles; k++){
@@ -226,6 +268,8 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
             //new_energy = local_energy(position, alpha);
             //new_energy = local_energy_interactions(position, relative_position, alpha, beta, gamma, hard_core_radius);
             new_energy = local_energy_naive(position, relative_position, alpha, beta, gamma, hard_core_radius);
+            //cout << alpha << "," << new_energy << endl;
+
         }
         new_der_wf = dwf_dalpha(new_position); //update new derivative of wave function 
         //update values for the energy and the derivative of the wave function
