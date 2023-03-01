@@ -1,12 +1,12 @@
 # Order of MC cycles
-6
+5
 # Number of particles
 10
 # Number of dimensions
 3
 # Bool for importance sampling
-0
+1
 # Time step for importance sampling
-0.0005
+0.7
 # Step size for brute force sampling 
-1.0
+2.5 

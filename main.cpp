@@ -164,8 +164,13 @@ int main(int argc, char *argv[]){
     ofile.open(filename);
     ofile << "MC,N,d,alpha,energy,variance" << endl;
     vec alpha_values = linspace(0.1, 1.0, 10);
-    //cout << "alpha,energy" << endl;
-    for (double alpha : alpha_values){
+    vec step_sizes = step*linspace(0.4, 1.0, 10);
+    vec time_steps = time_step*linspace(0.4, 1.0, 10);
+    int N_alpha = alpha_values.size(); 
+    for (int i = 0; i < N_alpha; i++){
+        double alpha = alpha_values[i];
+        double step = step_sizes[N_alpha - i - 1];
+        double time_step = time_steps[N_alpha - i - 1];
         vec result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, interactions, gamma, beta, hard_core_radius);
         ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << result[0] << "," << result[1] << endl;
     }

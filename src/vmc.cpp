@@ -116,7 +116,7 @@ void sampling(mat& position, mat& new_position, double alpha, int k, double step
             vec qf_new = quantum_force_naive(new_position, relative_position_new, alpha, beta, hard_core_radius, k);
             greens = greens_ratio(qf, qf_new, position, new_position, time_step, D, k);
             //cout << "greens: " << greens << endl;
-            ratio = greens * probability_ratio_naive(position, position, relative_position, relative_position_new, alpha, beta, hard_core_radius, k);
+            ratio = greens * probability_ratio_naive(position, new_position, relative_position, relative_position_new, alpha, beta, hard_core_radius, k);
             //cout << "ratio: " << ratio << endl;
             if (random_number <= ratio){
                 accepted_moves += 1;
@@ -326,7 +326,7 @@ void minimize_parameters(int MC_cycles, double step, int N_particles, int N_dime
     alpha -= learning_rate*result[2];
 
     int iter = 0;
-    while (iter < max_iter and abs(old_energy - new_energy) > 0.0001){
+    while (iter < max_iter and abs(old_energy - new_energy) > 0.0001){ 
         result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step);
         alpha -= learning_rate*result[2];
         old_energy = new_energy; //update old energy
