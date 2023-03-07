@@ -197,9 +197,39 @@ void sampling(mat& position, mat& new_position, double alpha, int k, double step
         }
     }
 }
+
+vec monte_carlo_parallelized(int N_walkers, double alpha, int MC_cycles, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, bool numerical_double_derivative, double ndd_h, bool interactions, double gamma, double beta, double hard_core_radius){
+    int mc_per_walker = MC_cycles / N_walkers;
+
+    cout << "N_walkers: " << N_walkers << endl;
+    vector<vec> results;
+    for (int i=0; i<N_walkers; i++){
+        results.push_back(vec());
+    }
+
+    cout.setstate(ios_base::failbit); //turn off cout
+    #pragma omp parallel for
+    for (int i=0; i<N_walkers; i++){
+        results[i] = monte_carlo(alpha, mc_per_walker, step, N_particles, N_dimensions, importance_sampling, time_step, numerical_double_derivative, ndd_h, interactions, gamma, beta, hard_core_radius);
+    }
+    cout.clear(); //turn on cout
+
+    // Average results from all walkers
+    vec sum_results({0, 0, 0});
+    for (int i=0; i<N_walkers; i++){
+        sum_results += results[i];
+    }
+    vec average = sum_results / N_walkers;
+    return average;
+
+}
+
+
+
 vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, bool numerical_double_derivative, double ndd_h, bool interactions, double gamma, double beta, double hard_core_radius){
     //initialize the random number generator
     unsigned int seed = chrono::system_clock::now().time_since_epoch().count();
+    cout << seed << endl;
     mt19937 generator;
     generator.seed(seed);
     
