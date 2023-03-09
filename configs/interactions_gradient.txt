@@ -1,0 +1,14 @@
+# Order of MC cycles
+4
+# Number of particles
+10
+# Number of dimensions
+3
+# Bool for importance sampling
+1
+# Time step for importance sampling
+0.7
+# Learning rate for gradient descent
+-3
+# Max iterations for gradient descent
+100
