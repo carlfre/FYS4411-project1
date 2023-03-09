@@ -165,15 +165,35 @@ int main(int argc, char *argv[]){
     ofile << "MC,N,d,alpha,energy,variance" << endl;
     vec alpha_values = linspace(0.1, 1.0, 10);
     vec step_sizes = step*linspace(0.4, 1.0, 10);
-    vec time_steps = time_step*linspace(0.4, 1.0, 10);
+    vec time_steps = {0.7, 0.7, 0.65, 0.6, 0.5, 0.2, 0.1, 0.07, 0.04, 0.01};
+    //vec time_steps = time_step*linspace(0.5, 1.5, 10);
     int N_alpha = alpha_values.size(); 
     for (int i = 0; i < N_alpha; i++){
         double alpha = alpha_values[i];
         double step = step_sizes[N_alpha - i - 1];
-        double time_step = time_steps[N_alpha - i - 1];
+        double time_step = time_steps[i];
         vec result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, interactions, gamma, beta, hard_core_radius);
         ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << result[0] << "," << result[1] << endl;
     }
+  }
+
+  else if(task == "interactions_gradient"){
+    if (input_data.size() != 7){
+        cout << "Wrong number of parameters in config file" << endl;
+        exit(1);
+    }
+    int MC_cycles = pow(10, input_data[0]);
+    int N_particles = input_data[1];
+    int N_dimensions = input_data[2];
+    bool importance_sampling = (bool) input_data[3];
+    double time_step = input_data[4];
+    double learning_rate = pow(10, input_data[5]);
+    int max_iter = input_data[6];
+    bool interactions = true;
+    double gamma = 2.82843;
+    double beta = 2.82843;
+    double hard_core_radius = 0.0043;
+    minimize_parameters(MC_cycles, -2.0, N_particles, N_dimensions, importance_sampling, time_step, learning_rate, max_iter, interactions, gamma, beta, hard_core_radius);
   }
   else{
       cout << "Unknown task" << endl;

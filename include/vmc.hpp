@@ -29,6 +29,8 @@ double local_energy_numerical(arma::mat& position, double alpha, double h);
 
 double trial_wavefunction(arma::mat& position, double alpha);
 
+void minimize_parameters(int MC_cycles, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, double learning_rate, int max_iter, bool interactions, double gamma, double beta, double hard_core_radius);
+
 void minimize_parameters(int MC_cycles, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, double learning_rate, int max_iter);
 
 double greens_ratio(arma::vec& qf_old, arma::vec& qf_new, arma::mat& position_old, arma::mat& position_new, double time_step, double D, int index);

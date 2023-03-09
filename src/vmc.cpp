@@ -208,15 +208,7 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
     mat position = mat(N_dimensions, N_particles);
     mat relative_position = mat(N_particles, N_particles).fill(0.0); 
     if (interactions){
-        set_initial_state(position, relative_position, N_particles, N_dimensions, hard_core_radius);
-        /*
-        position = 1000*hard_core_radius*(mat(N_dimensions, N_particles).randu() - 0.5); //initialize all particles at random positions
-        position = mat(N_dimensions, N_particles).randu() - 0.5; 
-        for (int i = 0; i < relative_position.n_cols; i++){
-            for (int j = i + 1; j < relative_position.n_rows; j++){
-                relative_position(j, i) = norm(position.col(i) - position.col(j));
-            }
-        }*/    
+        set_initial_state(position, relative_position, N_particles, N_dimensions, hard_core_radius);  
     }
     else{
          position = mat(N_dimensions, N_particles).fill(0.0); //initialize all particles at the origin 
@@ -228,18 +220,35 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
     double D = 0.5; // diffusion constant for importance sampling
     // to equilibrate the system
     int accepted_moves = 0; //number of accepted moves
+    double fraction = 0.0;
     if (interactions){
         //not necessary to equilibrate the system for the non-interactive case as it starts out in the most probable state
-        int N_equilibration = 100000;
-        for (int j = 0; j < N_equilibration; j++){
-            for (int k = 0; k < N_particles; k++){
-                double random_number = rng_double(generator);
-                sampling(position, new_position, alpha, k, step, time_step, D, importance_sampling, accepted_moves, stepping_vector, random_number, interactions, relative_position, relative_position_new, gamma, beta, hard_core_radius);
+        int N_equilibration = 1000;
+        while(0.8 > fraction | fraction > 0.95){
+            accepted_moves = 0;
+            for (int j = 0; j < N_equilibration; j++){
+                for (int k = 0; k < N_particles; k++){
+                    double random_number = rng_double(generator);
+                    sampling(position, new_position, alpha, k, step, time_step, D, importance_sampling, accepted_moves, stepping_vector, random_number, interactions, relative_position, relative_position_new, gamma, beta, hard_core_radius);
+                   }
             }
+            fraction = (accepted_moves + 0.0)/(N_particles*N_equilibration);
+            if (importance_sampling & fraction < 0.8){
+                //if the acceptance rate is too low, decrease the step size
+                time_step *= 0.8;
+            }
+            else if (importance_sampling & fraction > 0.95){
+                //if the acceptance rate is too high, increase the step size
+                time_step *= 1.2;
+            }
+        
+        //     cout << "Time step: " << time_step << endl;
+        //     cout << "Fraction of accepted moves: " << fraction << endl; 
         }
         //relative_position.print();
         cout << "Equilibration done" << endl;
         cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
+        cout << "Final time size: " << time_step << endl;
     }
     double energy = 0.0; //accumulator for the energy
     double energy_squared = 0.0; //accumulator for the energy squared
@@ -294,7 +303,9 @@ double dwf_dalpha(arma::mat& position){
     return -accu(position % position);
 }
 
-void minimize_parameters(int MC_cycles, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, double learning_rate, int max_iter){
+// vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, bool interactions, double gamma, double beta, double hard_core_radius){
+
+void minimize_parameters(int MC_cycles, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, double learning_rate, int max_iter, bool interactions, double gamma, double beta, double hard_core_radius){
     //prepare output file
     string filename;
     if (importance_sampling){
@@ -308,46 +319,44 @@ void minimize_parameters(int MC_cycles, double step, int N_particles, int N_dime
     ofile << "MC,N,d,alpha,energy,variance" << endl;
 
     double alpha = 0.1; //starting value for alpha
-
-    vec result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step);
-    double old_energy = result[0];
-    double energy_variance = result[1];
-
-    ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << old_energy << "," << energy_variance << endl;
-
-    alpha -= learning_rate*result[2];
     
-    result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step);
-    double new_energy = result[0];
-    energy_variance = result[1];
+    vec result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, interactions, gamma, beta, hard_core_radius);
+    double energy = result[0];
+    double energy_variance = result[1];
+    vector<double> alpha_values;
+    alpha_values.push_back(alpha);
+    ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << energy << "," << energy_variance << endl;
 
-    ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << new_energy << "," << energy_variance << endl;
-
-    alpha -= learning_rate*result[2];
-
-    int iter = 0;
-    while (iter < max_iter and abs(old_energy - new_energy) > 0.0001){ 
-        result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step);
-        alpha -= learning_rate*result[2];
-        old_energy = new_energy; //update old energy
-        new_energy = result[0]; //update new energy
+    double momentum = 0.3;
+    int iter = 1;
+    alpha_values.push_back(alpha_values[0] - learning_rate*result[2]);
+    while (iter < max_iter and abs(alpha_values[iter] - alpha_values[iter - 1]) > 0.0001){ 
+        result = monte_carlo(alpha_values[iter], MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, interactions, gamma, beta, hard_core_radius);
+        //old_alpha = new_alpha;
+        alpha_values.push_back(alpha_values[iter] - learning_rate*result[2] + momentum*(alpha_values[iter] - alpha_values[iter-1]));
+        energy = result[0]; //update new energy
         energy_variance = result[1]; //update energy variance
 
-        ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << new_energy << "," << energy_variance << endl;
+        ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha_values[iter] << "," << energy << "," << energy_variance << endl;
         iter ++;
     }
 
     ofile.close();
     if (iter == max_iter){
         cout << "Did not converge after " << iter << " iterations. The final parameters are:" << endl;
-        cout << "alpha: " << alpha << endl;
-        cout << "energy: " << new_energy << endl;
+        cout << "alpha: " << alpha_values.back() << endl;
+        cout << "energy: " << energy << endl;
         cout << "variance: " << energy_variance << endl;
     }
     else{
         cout << "Converged after " << iter << " iterations. The final parameters are:" << endl;
-        cout << "alpha: " << alpha << endl;
-        cout << "energy: " << new_energy << endl;
+        cout << "alpha: " << alpha_values.back() << endl;
+        cout << "energy: " << energy << endl;
         cout << "variance: " << energy_variance << endl;
     }
+}
+
+void minimize_parameters(int MC_cycles, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, double learning_rate, int max_iter){
+    // no interactions
+    minimize_parameters(MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, learning_rate, max_iter, false, -2.0, -2.0, -2.0);
 }
