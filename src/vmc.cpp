@@ -229,10 +229,12 @@ vec monte_carlo_parallelized(int N_walkers, double alpha, int MC_cycles, double 
 vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, bool numerical_double_derivative, double ndd_h, bool interactions, double gamma, double beta, double hard_core_radius){
     //initialize the random number generator
     unsigned int seed = chrono::system_clock::now().time_since_epoch().count();
-    cout << seed << endl;
+    //cout << seed << endl;
     mt19937 generator;
     generator.seed(seed);
-    
+    string filename_for_density = "output/density_" + to_string(interactions) + "_" + to_string(N_particles) + ".csv";
+    ofstream ofile_density;
+    ofile_density.open(filename_for_density);
     arma::arma_rng::set_seed_random();
     uniform_real_distribution<double> rng_double(0,1);
     mat position = mat(N_dimensions, N_particles);
@@ -271,14 +273,11 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
                 //if the acceptance rate is too high, increase the step size
                 time_step *= 1.2;
             }
-        
-        //     cout << "Time step: " << time_step << endl;
-        //     cout << "Fraction of accepted moves: " << fraction << endl; 
         }
         //relative_position.print();
         cout << "Equilibration done" << endl;
         cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
-        cout << "Final time size: " << time_step << endl;
+        cout << "Final time step: " << time_step << endl;
     }
     double energy = 0.0; //accumulator for the energy
     double energy_squared = 0.0; //accumulator for the energy squared
@@ -297,6 +296,8 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
             sampling(position, new_position, alpha, k, step, time_step, D, importance_sampling, accepted_moves, stepping_vector, random_number, interactions, relative_position, relative_position_new, gamma, beta, hard_core_radius);
             
         }
+        ofile_density << position.t();
+    
         if (numerical_double_derivative && !interactions){
             new_energy = local_energy_numerical(position, alpha, ndd_h); //update new energy
         }
@@ -317,6 +318,7 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
         der_wf += new_der_wf;
         der_wf_energy += new_der_wf*new_energy;
     }
+    ofile_density.close();
     energy = energy/(MC_cycles); 
     double energy2 = energy_squared/(MC_cycles);
     double energy_variance = energy2 - energy*energy;
@@ -326,6 +328,7 @@ vec monte_carlo(double alpha, int MC_cycles, double step, int N_particles, int N
     double alpha_derivative = 2*(der_wf_energy - der_wf*energy);
     vec result = {energy, energy_variance, alpha_derivative};
     cout << "fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*MC_cycles) << endl;
+    // string filename = "./../output/density/particles_" + to_string(N_particles) + "_" + to_string(alpha) + ".bin";
     return result;
 }
 
@@ -360,7 +363,7 @@ void minimize_parameters(int MC_cycles, double step, int N_particles, int N_dime
     double momentum = 0.3;
     int iter = 1;
     alpha_values.push_back(alpha_values[0] - learning_rate*result[2]);
-    while (iter < max_iter and abs(alpha_values[iter] - alpha_values[iter - 1]) > 0.0001){ 
+    while (iter < max_iter and abs(alpha_values[iter] - alpha_values[iter - 1]) > 0.00001){ 
         result = monte_carlo(alpha_values[iter], MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, interactions, gamma, beta, hard_core_radius);
         //old_alpha = new_alpha;
         alpha_values.push_back(alpha_values[iter] - learning_rate*result[2] + momentum*(alpha_values[iter] - alpha_values[iter-1]));
