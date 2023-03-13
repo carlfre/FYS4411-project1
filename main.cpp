@@ -1,6 +1,7 @@
 // #include "include/vmc.hpp"
 // #include "include/interaction.hpp"
 #include "include/vmc_walker.hpp"
+#include "include/parallelization.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -52,129 +53,236 @@ int main(int argc, char *argv[])
     }
     myfile.close();
 
+    // TODO: Fix block below
+    // if (task == "analytical"){
+    //     double beta = input_data[0];
+    //     double gamma = input_data[1];
+    //     double step = input_data[2];
+    //     double time_step = input_data[3];
+    //     double hard_core_radius = input_data[4];
+    //     double ndd_h = -1;
+    //     int N_particles = input_data[5];
+    //     int N_dimensions = input_data[6];
+    //     bool importance_sampling = input_data[7];
+    //     bool numerical_double_derivative = false;
+    //     bool interactions = input_data[8];
+    //     int MC_cycles = pow(10, input_data[9]);
 
-      if (task == "numerical"){
-        //   double step = 1.0;
-        //   if (input_data.size() != 6){
-        //       cout << "Wrong number of parameters in config file" << endl;
-        //       exit(1);
-        //   }
-        //   int N_particles = input_data[0];
-        //   int N_dimensions = input_data[1];
-        //   int MC_cycles = pow(10, input_data[2]);
-        //   double ndd_h = input_data[3];
-        //   bool importance_sampling;
-        //   double time_step = input_data[5];
-        //   string filename;
-        //   if (input_data[4] == 0){
-        //       importance_sampling = false;
-        //       cout << "No importance sampling" << endl;
-        //       filename = "output/N=" + to_string(N_particles) +
-        //                         "_d=" + to_string(N_dimensions) + "_num.csv";
-        //   }
-        //   else{
-        //       importance_sampling = true;
-        //       filename = "output/numerical_N=" + to_string(N_particles) +
-        //                         "_d=" + to_string(N_dimensions) + "num_IS.csv";
-        //       cout << "Importance sampling" << endl;
-        //   }
-        //   ofstream ofile;
-        //   ofile.open(filename);
-        //   ofile << "MC,N,d,alpha,energy,variance" << endl;
-        //   vec alpha_values = linspace(0.1, 1.0, 10);
-        //   for (double alpha : alpha_values){
-        //       vec result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, true, ndd_h);
-        //       ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << result[0] << "," << result[1] << endl;
-        //    }
+    //     string filename;
+    //     if (importance_sampling){
+    //         importance_sampling = true;
+    //         filename = "output/N=" + to_string(N_particles) +
+    //                    "_d=" + to_string(N_dimensions) + "_ana_IS.csv";
+    //         cout << "Importance sampling" << endl;
+    //     }
+    //     else{
+    //         importance_sampling = false;
+    //         cout << "No importance sampling" << endl;
+    //         filename = "output/N=" + to_string(N_particles) +
+    //                    "_d=" + to_string(N_dimensions) + "_ana.csv";
+    //     }
 
-      }
-    //   else if(task == "analytical"){
-    //       double step = 1.5;
-    //       if (input_data.size() != 5){
-    //           cout << "Wrong number of parameters in config file" << endl;
-    //           exit(1);
-    //       }
-    //       int MC_cycles = pow(10, input_data[0]);
-    //       int N_particles = input_data[1];
-    //       int N_dimensions = input_data[2];
-    //       double time_step = input_data[4];
-    //       bool importance_sampling = (bool) input_data[3];
-    //       string filename;
-    //       if (input_data[3] == 0){
-    //           importance_sampling = false;
-    //           cout << "No importance sampling" << endl;
-    //           filename = "output/N=" + to_string(N_particles) +
-    //                             "_d=" + to_string(N_dimensions) + "_ana.csv";
-    //       }
-    //       else{
-    //           importance_sampling = true;
-    //           filename = "output/N=" + to_string(N_particles) +
-    //                             "_d=" + to_string(N_dimensions) + "_ana_IS.csv";
-    //           cout << "Importance sampling" << endl;
-    //       }
-    //       vec result = monte_carlo(0.5, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step);
-        //   ofstream ofile;
-        //   ofile.open(filename);
-        //   ofile << "MC,N,d,alpha,energy,variance" << endl;
-        //   vec alpha_values = linspace(0.1, 1.0, 10);
-        //   for (double alpha : alpha_values){
-        //       vec result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step);
-        //       ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << result[0] << "," << result[1] << endl;
-        //   }
-    //   }
-      else if(task == "gradient"){
-        //   if (input_data.size() != 7){
-        //       cout << "Wrong number of parameters in config file" << endl;
-        //       exit(1);
-        //   }
-        //   double step = 1.0;
-        //   int MC_cycles = pow(10, input_data[0]);
-        //   int N_particles = input_data[1];
-        //   int N_dimensions = input_data[2];
-        //   double time_step = input_data[4];
-        //   double learning_rate = pow(10, input_data[5]);
-        //   int max_iter = input_data[6];
-        //   bool importance_sampling = (bool) input_data[3];
-        //   if (input_data[4] == 0){
-        //       importance_sampling = false;
-        //       cout << "No importance sampling" << endl;
-        //   }
-        //   else if (input_data[4] == 1){
-        //       importance_sampling = true;
-        //       cout << "Importance sampling" << endl;
-        //   }
-        double alpha = 0.1;
-        double beta = 0.5;
-        double gamma = 0.5;
-        double step = 1.0;
-        double time_step = 0.1;
-        double hard_core_radius = 1.0;
-        double ndd_h = 0.01;
-        int N_particles = 2;
-        int N_dimensions = 3;
-        bool importance_sampling = true;
-        bool numerical_double_derivative = false;
+    //     ofstream ofile;
+    //     ofile.open(filename);
+    //     ofile << "MC,N,d,alpha,energy,variance" << endl;
+    //     vec alpha_values = linspace(0.1, 1.0, 10);
+    //     for (double alpha : alpha_values)
+    //     {
+    //         VMCWalker walker(
+    //             alpha,
+    //             beta,
+    //             gamma,
+    //             step,
+    //             time_step,
+    //             hard_core_radius,
+    //             ndd_h,
+    //             N_particles,
+    //             N_dimensions,
+    //             importance_sampling,
+    //             numerical_double_derivative,
+    //             interactions);
+            
+    //         vec result = walker.walk(MC_cycles);
+    //         ofile << MC_cycles << "," << N_particles << "," << N_dimensions << "," << alpha << "," << result[0] << "," << result[1] << endl;
+    //     }
+    // }
+    if (task == "numerical") // TODO: fix variance calculation, all zeros currently.
+    {
+        double beta = -1;
+        double gamma = -1;
+        double step = input_data[0];
+        double time_step = input_data[1];
+        double hard_core_radius = -1;
+        double ndd_h = input_data[2]; // h for finite difference double derivative
+        int N_particles = input_data[3];
+        int N_dimensions = input_data[4];
+        bool importance_sampling = input_data[5];
+        bool numerical_double_derivative = input_data[6];
         bool interactions = false;
+        int MC_cycles = pow(10, input_data[7]);
 
+        string filename;
+        if (importance_sampling)
+        {
+            importance_sampling = true;
+            filename = "output/numerical_N=" + to_string(N_particles) +
+                       "_d=" + to_string(N_dimensions) + "num_IS.csv";
+            cout << "Importance sampling" << endl;
+        }
+        else
+        {
+            importance_sampling = false;
+            cout << "No importance sampling" << endl;
+            filename = "output/N=" + to_string(N_particles) +
+                       "_d=" + to_string(N_dimensions) + "_num.csv";
+        }
 
-          VMCWalker walker(
-            alpha, 
+        ofstream ofile;
+        ofile.open(filename);
+        ofile << "MC,N,d,alpha,energy,variance" << endl;
+        vec alpha_values = linspace(0.1, 1.0, 10);
+        for (double alpha : alpha_values)
+        {
+            VMCWalker walker(
+                alpha,
+                beta,
+                gamma,
+                step,
+                time_step,
+                hard_core_radius,
+                ndd_h,
+                N_particles,
+                N_dimensions,
+                importance_sampling,
+                numerical_double_derivative,
+                interactions);
+
+            vec result = walker.walk(MC_cycles, "", "");
+            // vec result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, true, ndd_h);
+            ofile << MC_cycles << "," << N_particles << "," << N_dimensions << "," << alpha << "," << result[0] << "," << result[1] << endl;
+        }
+    }
+
+    else if (task == "density")
+    {
+        double alpha = input_data[0];
+        double beta = input_data[1];
+        double gamma = input_data[2];
+        double step = input_data[3];
+        double time_step = input_data[4];
+        double hard_core_radius = input_data[5];
+        double ndd_h = -1; // not in use
+        int N_particles = input_data[6];
+        int N_dimensions = input_data[7];
+        bool importance_sampling = input_data[8];
+        bool numerical_double_derivative = false; // not in use
+        bool interactions = input_data[9];
+
+        // int MC_cycles = input_data[10];
+        int MC_cycles = pow(10, input_data[10]);
+        int n_walkers = input_data[11];
+        string density_filename = "density_N=" + to_string(N_particles); // + "_r=" + to_string(hard_core_radius).substr(0, 4)
+
+        parallelized_mcmc(
+            alpha,
             beta,
-            gamma, 
-            step, // for no importance sampling
-            time_step, // for importance sampling
-            hard_core_radius, // for interactions
-            ndd_h, // h for finite difference double derivative
-            N_particles, 
-            N_dimensions, 
-            importance_sampling, 
-            numerical_double_derivative, 
-            interactions
-        );
+            gamma,
+            step,
+            time_step,
+            hard_core_radius,
+            ndd_h,
+            N_particles,
+            N_dimensions,
+            importance_sampling,
+            numerical_double_derivative,
+            interactions,
+            MC_cycles,
+            n_walkers,
+            density_filename,
+            "");
+    }
+    else if (task == "statistics")
+    {
+        double alpha = input_data[0];
+        double beta = input_data[1];
+        double gamma = input_data[2];
+        double step = input_data[3];
+        double time_step = input_data[4];
+        double hard_core_radius = input_data[5];
+        double ndd_h = -1; // not in use
+        int N_particles = input_data[6];
+        int N_dimensions = input_data[7];
+        bool importance_sampling = input_data[8];
+        bool numerical_double_derivative = false; // not in use
+        bool interactions = input_data[9];
 
-        walker.minimize_parameters(100000, 0.01,  100);
-        //   minimize_parameters(MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, learning_rate, max_iter);
-    //   }
+        // int MC_cycles = input_data[10];
+        int MC_cycles = pow(10, input_data[10]);
+        int n_walkers = input_data[11];
+        string energy_filename = "energy_statistics_N=" + to_string(N_particles);
+
+        parallelized_mcmc(
+            alpha,
+            beta,
+            gamma,
+            step,
+            time_step,
+            hard_core_radius,
+            ndd_h,
+            N_particles,
+            N_dimensions,
+            importance_sampling,
+            numerical_double_derivative,
+            interactions,
+            MC_cycles,
+            n_walkers,
+            "",
+            energy_filename);
+    }
+    else if (task == "gradient")
+    {
+        double alpha = input_data[0];
+        double beta = input_data[1];
+        double gamma = input_data[2];
+        double step = input_data[3];
+        double time_step = input_data[4];
+        double hard_core_radius = input_data[5];
+        double ndd_h = -1; // not in use
+        int N_particles = input_data[6];
+        int N_dimensions = input_data[7];
+        bool importance_sampling = input_data[8];
+        bool numerical_double_derivative = false;
+        bool interactions = input_data[9];
+        int MC_cycles = pow(10, input_data[10]);
+        double learning_rate = input_data[11];
+        int max_iterations = input_data[12];
+
+        if (importance_sampling)
+        {
+            cout << "Importance sampling" << endl;
+        }
+        else
+        {
+            cout << "No importance sampling" << endl;
+        }
+
+        VMCWalker walker(
+            alpha,
+            beta,
+            gamma,
+            step,             // for no importance sampling
+            time_step,        // for importance sampling
+            hard_core_radius, // for interactions
+            ndd_h,            // h for finite difference double derivative
+            N_particles,
+            N_dimensions,
+            importance_sampling,
+            numerical_double_derivative,
+            interactions);
+
+        walker.minimize_parameters(MC_cycles, learning_rate, max_iterations);
+    }
+
     //   else if(task == "interactions"){
     //     if (input_data.size() != 6){
     //         cout << "Wrong number of parameters in config file" << endl;
@@ -282,9 +390,9 @@ int main(int argc, char *argv[])
     //       cout << "Unknown task" << endl;
     //   }
     //   return 0;
-}
+    // }
 
-// double alpha, int MC_cycles, int N_walkers, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, bool numerical_double_derivative, double ndd_h, bool interactions, double gamma, double beta, double hard_core_radius)
-// double alpha, int MC_cycles, int N_walkers, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, bool numerical_double_derivative, double ndd_h, bool interactions, double gamma, double beta, double hard_core_radius)
-// vec v = monte_carlo_parallelized(alpha, MC_cycles, N_walkers, step, N_particles, N_dimensions, importance_sampling, time_step, numerical_double_derivative, ndd_h, interactions, gamma, beta, hard_core_radius);
+    // double alpha, int MC_cycles, int N_walkers, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, bool numerical_double_derivative, double ndd_h, bool interactions, double gamma, double beta, double hard_core_radius)
+    // double alpha, int MC_cycles, int N_walkers, double step, int N_particles, int N_dimensions, bool importance_sampling, double time_step, bool numerical_double_derivative, double ndd_h, bool interactions, double gamma, double beta, double hard_core_radius)
+    // vec v = monte_carlo_parallelized(alpha, MC_cycles, N_walkers, step, N_particles, N_dimensions, importance_sampling, time_step, numerical_double_derivative, ndd_h, interactions, gamma, beta, hard_core_radius);
 }

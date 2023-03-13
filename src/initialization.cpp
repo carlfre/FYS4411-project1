@@ -7,6 +7,8 @@ using namespace std;
 void VMCWalker::set_initial_state_interaction(){
     int spread = 50;
     position = spread*hard_core_radius*(mat(N_dimensions, N_particles).randu() - 0.5); //initialize all particles at random positions
+    
+    relative_position = mat(N_particles, N_particles).fill(0.0);
     relative_position = trimatl(relative_position, 1); //strict lower triangular matrix to store relative positions
     for (int i = 0; i < N_particles; i++){
         vec r_i = position.col(i);

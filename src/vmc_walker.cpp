@@ -45,13 +45,16 @@ VMCWalker::VMCWalker(
     this->stepping_vector = vec(N_dimensions).fill(0.5); 
 }
 
-vec VMCWalker::walk(int MC_cycles, string density_filename)
+vec VMCWalker::walk(int MC_cycles, string density_filename, string energy_filename)
 {
     // if density_filename is specified, open a file for tracking positions
-    ofstream ofile_density;
+    ofstream ofile_density, ofile_energy;
     if (density_filename != ""){
-        // string filename_for_density = "output/density_" + to_string(interactions) + "_" + to_string(N_particles) + ".csv";
-        ofile_density.open(density_filename); 
+        ofile_density.open("output/" + density_filename + ".csv"); 
+    }
+    // if energy_filename is specified, open a file for tracking energy
+    if (energy_filename != ""){
+        ofile_energy.open("output/" + energy_filename + ".csv"); 
     }
 
     accepted_moves = 0; 
@@ -86,16 +89,25 @@ vec VMCWalker::walk(int MC_cycles, string density_filename)
         else if(interactions){
             new_energy = local_energy_naive(position, relative_position, alpha, beta, gamma, hard_core_radius); // TODO: Switch to other implementation?
         }
-
         //update values for the energy and the derivative of the wave function
         new_der_wf = dwf_dalpha(new_position); //update new derivative of wave function 
         energy += new_energy;
         energy_squared += new_energy*new_energy;
         der_wf += new_der_wf;
         der_wf_energy += new_der_wf*new_energy;
+
+        // write all particle positions to file
+        if (density_filename != ""){
+            ofile_density << new_position.t();
+        }
+        // write energy to file
+        if (energy_filename != ""){
+            ofile_energy << new_energy << endl;
+        }
     }
 
     ofile_density.close();
+    ofile_energy.close();
 
     energy = energy/(MC_cycles); 
     double energy2 = energy_squared/(MC_cycles);
@@ -106,13 +118,11 @@ vec VMCWalker::walk(int MC_cycles, string density_filename)
     double alpha_derivative = 2*(der_wf_energy - der_wf*energy);
     vec result = {energy, energy_variance, alpha_derivative};
     cout << "fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*MC_cycles) << endl;
-    // string filename = "./../output/density/particles_" + to_string(N_particles) + "_" + to_string(alpha) + ".bin";
     return result;
 }
 
-vec VMCWalker::walk(int MC_cycles)
-{
-    return walk(MC_cycles, "");
+vec VMCWalker::walk(int MC_cycles){
+    return walk(MC_cycles, "", "");
 }
 
 void VMCWalker::minimize_parameters(int MC_cycles, double learning_rate, int max_iter){

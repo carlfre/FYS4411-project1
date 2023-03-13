@@ -1,10 +1,20 @@
-# Order of MC cycles
-2
-# Number of particles
-500
-# Number of dimensions
+# beta
+-1
+#gamma
+-1
+# step
+-1
+# time_step
+0.1
+# hard_core_radius
+-1
+# N_particles
+50
+# N_dimensions
 3
-# Bool for importance sampling
+# importance_sampling
 1
-# Time step for importance sampling
-0.5
+# interactions
+0
+# log_10 of time_step
+3

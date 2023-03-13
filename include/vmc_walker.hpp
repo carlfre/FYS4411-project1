@@ -56,7 +56,7 @@ class VMCWalker{
             bool numerical_double_derivative, 
             bool interactions
         );
-        arma::vec walk(int MC_cycles, std::string density_filename);
+        arma::vec walk(int MC_cycles, std::string density_filename, std::string energy_filename);
         arma::vec walk(int MC_cycles);
         void minimize_parameters(int MC_cycles, double learning_rate, int max_iter);
 

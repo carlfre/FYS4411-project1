@@ -1,7 +1,7 @@
 # Order of MC cycles
-5
+2
 # Number of particles
-10
+2
 # Number of dimensions
 3
 # Bool for importance sampling

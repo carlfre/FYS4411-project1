@@ -1,12 +1,14 @@
-# Number of particles
-500
-# Number of dimensions
-3
-# Order of MC cycles
-4
-# Length for derivation
-0.001
-# Bool for importance sampling 
-0
-# Time-step for importance sampling
+# step (no importance sampling)
+1.0
+# time_step (importance sampling)
 0.1
+# ndd_h 
+0.001
+# N_particles
+50
+# N_dimensions
+3
+# importance_sampling
+1
+# log_10 (MC_cycles)
+4
