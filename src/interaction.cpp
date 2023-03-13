@@ -1,4 +1,3 @@
-#include "../include/vmc.hpp"
 #include "../include/interaction.hpp"
 using namespace arma;
 using namespace std;
@@ -153,22 +152,4 @@ vec quantum_force_naive(mat& position, mat& relative_position, double alpha, dou
         }
     }
     return qf;
-}
-
-void set_initial_state(mat& position, mat& relative_position, int N_particles, int N_dimensions, double hard_core_radius){
-    int spread = 50;
-    position = spread*hard_core_radius*(mat(N_dimensions, N_particles).randu() - 0.5); //initialize all particles at random positions
-    relative_position = trimatl(relative_position, 1); //strict lower triangular matrix to store relative positions
-    for (int i = 0; i < N_particles; i++){
-        vec r_i = position.col(i);
-        for (int j = i + 1; j < N_particles; j++){
-            double rel_pos = norm(r_i - position.col(j));
-            while (rel_pos < hard_core_radius){
-                //if two particles are too close, get new random positions
-                position.col(j) = spread*hard_core_radius*(vec(N_dimensions).randu() - 0.5);
-                rel_pos = norm(r_i - position.col(j));    
-            }
-            relative_position(j, i) = rel_pos;
-        }
-    }
 }

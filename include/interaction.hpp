@@ -12,5 +12,3 @@ double probability_ratio_naive(arma::mat& old_position, arma::mat& new_position,
 arma::mat& relative_position, arma::mat& relative_position_new, double alpha, double beta, double hard_core_radius, int particle_index);
 
 arma::vec quantum_force_naive(arma::mat& position, arma::mat& relative_position, double alpha, double beta, double hard_core_radius, int particle_index);
-
-void set_initial_state(arma::mat& position, arma::mat& relative_position, int N_dimensions, int N_particles, double hard_core_radius);
