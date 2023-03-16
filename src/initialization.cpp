@@ -37,40 +37,71 @@ void VMCWalker::set_initial_state(){
     }
 }
 
-void VMCWalker::burn_in_interaction()
+void VMCWalker::burn_in_importance_sampling()
 {
     double fraction = 0.0;
     int N_equilibration = 1000;
-    if (importance_sampling){
-        while(0.8 > fraction | fraction > 0.95){
-            accepted_moves = 0;
-            for (int j = 0; j < N_equilibration; j++){
-                for (int k = 0; k < N_particles; k++){
-                    sampling(k);
-                    }
-            }
-            fraction = (accepted_moves + 0.0)/(N_particles*N_equilibration);
-            if (importance_sampling & fraction < 0.8){
-                //if the acceptance rate is too low, decrease the step size
-                time_step *= 0.8;
-            }
-            else if (importance_sampling & fraction > 0.95){
-                //if the acceptance rate is too high, increase the step size
-                time_step *= 1.2;
-            }
-        }
-    }
-    else{
+    while(0.8 > fraction | fraction > 0.9){
+        accepted_moves = 0;
         for (int j = 0; j < N_equilibration; j++){
             for (int k = 0; k < N_particles; k++){
                 sampling(k);
-            }
+                }
         }
         fraction = (accepted_moves + 0.0)/(N_particles*N_equilibration);
+        if ( fraction < 0.8){
+            //if the acceptance rate is too low, decrease the step size
+            time_step *= 0.8;
+        }
+        else if (fraction > 0.9){
+            //if the acceptance rate is too high, increase the step size
+            time_step *= 1.2;
+        }
     }
+
     cout << "Equilibration done" << endl;
     cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
     cout << "Final time step: " << time_step << endl;
+}
+
+void VMCWalker::burn_in_brute_force_sampling(){
+    double fraction = 0.0;
+    int N_equilibration = 1000;
+    while(0.4 > fraction | fraction > 0.6){
+        accepted_moves = 0;
+        for (int j = 0; j < N_equilibration; j++){
+            for (int k = 0; k < N_particles; k++){
+                sampling(k);
+                }
+        }
+        fraction = (accepted_moves + 0.0)/(N_particles*N_equilibration);
+        if (fraction < 0.4){
+            //if the acceptance rate is too low, decrease the step size
+            step *= 0.8;
+        }
+        else if (fraction > 0.6){
+            //if the acceptance rate is too high, increase the step size
+            step *= 1.2;
+        }
+    }
+
+    cout << "Equilibration done" << endl;
+    cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
+    cout << "Final step: " << step<< endl;
+}
+
+void VMCWalker::burn_in_no_adjustment(){
+    int N_equilibration = 1000;
+    accepted_moves = 0;
+    for (int j = 0; j < N_equilibration; j++){
+        for (int k = 0; k < N_particles; k++){
+            sampling(k);
+        }
+    }
+    double fraction = (accepted_moves + 0.0)/(N_particles*N_equilibration);
+
+    cout << "Equilibration done" << endl;
+    cout << "Fraction of accepted moves: " << fraction << endl;    
 }
 
 void VMCWalker::initialize(){
@@ -78,8 +109,13 @@ void VMCWalker::initialize(){
     new_position = position;
     relative_position_new = relative_position;
 
-    // With interactions, the system needs to equilibriate before the simulation starts
-    if (interactions){
-        burn_in_interaction();
+    if (!adjust_step_automatically){
+        burn_in_no_adjustment();
+    }
+    else if (importance_sampling){
+        burn_in_importance_sampling();
+    }
+    else{
+        burn_in_brute_force_sampling();
     }
 }

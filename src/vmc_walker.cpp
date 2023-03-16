@@ -33,6 +33,7 @@ VMCWalker::VMCWalker(
     this->importance_sampling = importance_sampling;
     this->numerical_double_derivative = numerical_double_derivative;
     this->interactions = interactions;
+    this->adjust_step_automatically=true;
     this->ndd_h = ndd_h;
 
     // initialize random number generator 
@@ -43,6 +44,10 @@ VMCWalker::VMCWalker(
     // initialize stepping vector (for no importance sampling)
     // this is a vector filled with 0.5 to get rand(-0.5, 0.5) = rand(0, 1) - 0.5
     this->stepping_vector = vec(N_dimensions).fill(0.5); 
+}
+
+void VMCWalker::set_step_adjustment(bool use_adjustment){
+    adjust_step_automatically=use_adjustment;
 }
 
 vec VMCWalker::walk(int MC_cycles, string density_filename, string energy_filename)
@@ -59,7 +64,7 @@ vec VMCWalker::walk(int MC_cycles, string density_filename, string energy_filena
 
     accepted_moves = 0; 
 
-    // Initialize particle positions, and burn in if interactions are on
+    // Initialize particle positions, and burn in
     initialize();
 
     double energy = 0.0; //accumulator for the energy
@@ -78,7 +83,6 @@ vec VMCWalker::walk(int MC_cycles, string density_filename, string energy_filena
         for (int k = 0; k < N_particles; k++){
             sampling(k);            
         }
-        // ofile_density << position.t();
     
         if (numerical_double_derivative && !interactions){
             new_energy = local_energy_numerical(position, alpha, ndd_h); //update new energy
@@ -86,13 +90,18 @@ vec VMCWalker::walk(int MC_cycles, string density_filename, string energy_filena
         else if(!interactions && !numerical_double_derivative){
             new_energy = local_energy(position, alpha);
         }
-        else if(interactions){
+        else if(interactions && !numerical_double_derivative){
             new_energy = local_energy_naive(position, relative_position, alpha, beta, gamma, hard_core_radius); // TODO: Switch to other implementation?
         }
+        else{
+            throw "Numerical double derivative + interactions is not implemented";
+        }
+        
         //update values for the energy and the derivative of the wave function
-        new_der_wf = dwf_dalpha(new_position); //update new derivative of wave function 
+        new_der_wf = dwf_dalpha(new_position); //update new derivative of wave function
         energy += new_energy;
         energy_squared += new_energy*new_energy;
+
         der_wf += new_der_wf;
         der_wf_energy += new_der_wf*new_energy;
 

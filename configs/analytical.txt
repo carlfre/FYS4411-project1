@@ -16,5 +16,5 @@
 1
 # interactions
 0
-# log_10 of time_step
+# log_10(MC_cycles)
 3

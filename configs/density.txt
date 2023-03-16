@@ -1,5 +1,5 @@
 # alpha
-0.1
+0.5
 # beta 
 0.5
 # gamma
@@ -11,7 +11,7 @@
 # hard_core_radius
 1.0
 # N_particles
-50
+10
 # N_dimensions
 3
 # importance_sampling
@@ -19,6 +19,6 @@
 # interactions
 1
 # log_10 (MC_cycles)
-3
+2
 # N_walkers
 16

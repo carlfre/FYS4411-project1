@@ -1,20 +1,18 @@
-# beta
-2.82843
-#gamma
-2.82843
+# alpha
+0.5
 # step
--1
+0.1
 # time_step
 0.1
-# hard_core_radius
-0.0043
 # N_particles
-50
+10
 # N_dimensions
 3
-# importance_sampling
+# Importance sampling
 1
 # log_10(MC_cycles)
-3
+7
 # n_walkers
 16
+# n_averages
+10

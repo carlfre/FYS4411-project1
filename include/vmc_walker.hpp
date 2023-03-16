@@ -32,6 +32,7 @@ class VMCWalker{
         bool interactions;
         bool importance_sampling;
         bool numerical_double_derivative;
+        bool adjust_step_automatically;
         // random number generation
         // mersenne twister
         std::mt19937_64 generator;
@@ -56,6 +57,7 @@ class VMCWalker{
             bool numerical_double_derivative, 
             bool interactions
         );
+        void set_step_adjustment(bool use_adjustment);
         arma::vec walk(int MC_cycles, std::string density_filename, std::string energy_filename);
         arma::vec walk(int MC_cycles);
         void minimize_parameters(int MC_cycles, double learning_rate, int max_iter);
@@ -64,7 +66,9 @@ class VMCWalker{
         void set_initial_state_interaction();
         void set_initial_state_no_interaction();
         void set_initial_state();
-        void burn_in_interaction();
+        void burn_in_importance_sampling();
+        void burn_in_brute_force_sampling();
+        void burn_in_no_adjustment();
         void initialize();
 
         // sampling.cpp

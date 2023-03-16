@@ -9,6 +9,6 @@
 # N_dimensions
 3
 # importance_sampling
-1
+0
 # log_10 (MC_cycles)
 4
