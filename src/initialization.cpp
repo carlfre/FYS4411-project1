@@ -26,10 +26,11 @@ void VMCWalker::set_initial_state_interaction(){
 
 void VMCWalker::set_initial_state_no_interaction(){
     position = mat(N_dimensions, N_particles).fill(0.0);
+    relative_position = mat(N_particles, N_particles).fill(0.0); // not in use - for compatibility only
 }
 
 void VMCWalker::set_initial_state(){
-    if (interactions){
+    if (interactions && hard_core_radius > 0){ 
         set_initial_state_interaction();
     }
     else{
@@ -37,7 +38,7 @@ void VMCWalker::set_initial_state(){
     }
 }
 
-void VMCWalker::burn_in_importance_sampling()
+void VMCWalker::adjust_timestep_importance_sampling()
 {
     double fraction = 0.0;
     int N_equilibration = 1000;
@@ -59,12 +60,11 @@ void VMCWalker::burn_in_importance_sampling()
         }
     }
 
-    cout << "Equilibration done" << endl;
-    cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
-    cout << "Final time step: " << time_step << endl;
+    // cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
+    // cout << "Final time step: " << time_step << endl;
 }
 
-void VMCWalker::burn_in_brute_force_sampling(){
+void VMCWalker::adjust_step_brute_force_sampling(){
     double fraction = 0.0;
     int N_equilibration = 1000;
     while(0.4 > fraction | fraction > 0.6){
@@ -85,13 +85,12 @@ void VMCWalker::burn_in_brute_force_sampling(){
         }
     }
 
-    cout << "Equilibration done" << endl;
-    cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
-    cout << "Final step: " << step<< endl;
+    // cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
+    // cout << "Final step: " << step<< endl;
 }
 
-void VMCWalker::burn_in_no_adjustment(){
-    int N_equilibration = 1000;
+void VMCWalker::burn_in(){
+    int N_equilibration = 10'000;
     accepted_moves = 0;
     for (int j = 0; j < N_equilibration; j++){
         for (int k = 0; k < N_particles; k++){
@@ -100,22 +99,21 @@ void VMCWalker::burn_in_no_adjustment(){
     }
     double fraction = (accepted_moves + 0.0)/(N_particles*N_equilibration);
 
-    cout << "Equilibration done" << endl;
-    cout << "Fraction of accepted moves: " << fraction << endl;    
+    // cout << "Equilibration done" << endl;
+    // cout << "Fraction of accepted moves: " << fraction << endl;    
 }
 
 void VMCWalker::initialize(){
     set_initial_state();
     new_position = position;
     relative_position_new = relative_position;
-
-    if (!adjust_step_automatically){
-        burn_in_no_adjustment();
+    if (adjust_step_automatically){
+        if (importance_sampling){
+            adjust_timestep_importance_sampling();
+        }
+        else{
+            adjust_step_brute_force_sampling();;
+        }
     }
-    else if (importance_sampling){
-        burn_in_importance_sampling();
-    }
-    else{
-        burn_in_brute_force_sampling();
-    }
+    burn_in();
 }

@@ -15,7 +15,7 @@ double probability_ratio(arma::mat& old_position, arma::mat& new_position, doubl
 
 double trial_wavefunction(arma::mat& position, double alpha);
 
-double dwf_dalpha(arma::mat& position);
+double dwf_dalpha(arma::mat& position, double beta,  bool interactions);
 
 double local_energy_numerical(arma::mat& position, double alpha, double h);
 

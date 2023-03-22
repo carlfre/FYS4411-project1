@@ -25,8 +25,20 @@ double trial_wavefunction(mat& position, double alpha){
     return exp(-alpha*exponent);
 }
 
-double dwf_dalpha(arma::mat& position){
-    return -accu(position % position);
+double dwf_dalpha(arma::mat& position, double beta,  bool interactions){
+    if (interactions){
+        double ssum = 0;
+        int N_particles = position.n_cols;
+        for (int i = 0; i < N_particles; i++){
+            // ssum += 1/(dot(position.col(i) - position.col(j), position.col(i) - position.col(j)));
+            vec r_i = position.col(i);
+            ssum = r_i[0]*r_i[0] + r_i[1]*r_i[1] + beta * r_i[2]*r_i[2];
+        }
+        return -ssum;
+    }
+    else{
+        return -accu(position % position);
+    }
 }
 
 double local_energy_numerical(mat& position, double alpha, double h){

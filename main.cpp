@@ -220,9 +220,17 @@ int main(int argc, char *argv[])
         bool importance_sampling = input_data[8];
         bool numerical_double_derivative = false; // not in use
         bool interactions = input_data[9];
-        int MC_cycles = pow(10, input_data[10]);
+        int MC_cycles = pow(2, input_data[10]); // NOTICE: base 2 here, to work better with blocking!
         int n_walkers = input_data[11];
-        string energy_filename = "energy_statistics_N=" + to_string(N_particles);
+        string energy_filename = "temp_energy_statistics_N=" + to_string(N_particles) + "_d=" + to_string(N_dimensions);
+        if (interactions){
+            energy_filename += "_interactions";
+        }
+        else{
+            energy_filename += "_no_interactions";
+        }
+        cout << "Filename: " << energy_filename << endl;
+        cout << "MC cycles: " << MC_cycles << endl;
 
         parallelized_mcmc(
             alpha,
@@ -367,21 +375,45 @@ int main(int argc, char *argv[])
         double learning_rate = pow(10, input_data[10]);
         int max_iterations = input_data[11];
 
-        VMCWalker walker(
-            alpha_0,
-            beta,
-            gamma,
-            step,             // for no importance sampling
-            time_step,        // for importance sampling
-            hard_core_radius, // for interactions
-            ndd_h,            // h for finite difference double derivative
-            N_particles,
-            N_dimensions,
-            importance_sampling,
-            numerical_double_derivative,
-            interactions);
 
-        walker.minimize_parameters(MC_cycles, learning_rate, max_iterations);
+
+        vector<string> filenames = {};
+        vector<vec> results = {};
+        for (int i=0; i<10; i++){
+            string filename = "output/N=" + to_string(N_particles) + "_int_grad_" + to_string(i) + ".csv";
+            filenames.push_back(filename);
+            results.push_back(vec(2));
+            
+        }
+
+        #pragma omp parallel for
+        for(int i=0; i<10; i++){
+            string filename = filenames[i];
+            VMCWalker walker(
+                alpha_0,
+                beta,
+                gamma,
+                step,             // for no importance sampling
+                time_step,        // for importance sampling
+                hard_core_radius, // for interactions
+                ndd_h,            // h for finite difference double derivative
+                N_particles,
+                N_dimensions,
+                importance_sampling,
+                numerical_double_derivative,
+                interactions);
+            vec res = walker.minimize_parameters(MC_cycles, learning_rate, max_iterations);
+            results[i] = res;
+        }
+
+        // write to file
+        ofstream ofile;
+        ofile.open("output/interactions_gradient_N=" + to_string(N_particles) + ".csv");
+        ofile << "alpha,iterations" << endl;
+        for (int i=0; i<10; i++){
+            ofile << results[i][0] << "," << results[i][1] << endl;
+        }
+
         
         // int MC_cycles = pow(10, input_data[0]);
         // int N_particles = input_data[1];

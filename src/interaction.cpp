@@ -63,52 +63,56 @@ double local_energy_naive(mat& position, mat& relative_position, double alpha, d
         vec r_k = position.col(k);
         kinetic_energy += -2*alpha*(beta + 2);
         kinetic_energy += 4*alpha*alpha*(r_k(0)*r_k(0) + r_k(1)*r_k(1) + beta*beta*r_k(2)*r_k(2));
-        vec kinetic_energy_contrib = vec(3, fill::zeros);
-        for (int l = 0; l < position.n_cols; l++){
-            if (l != k){
-                vec r_l = position.col(l);
-                double r_kl = max(relative_position.col(k)(l), relative_position.col(l)(k));
-                assert(r_kl != 0);
-                assert(r_kl > hard_core_radius);
-                double H_kl = hard_core_radius/(r_kl*r_kl*(r_kl-hard_core_radius));
-                kinetic_energy_contrib += H_kl*(r_k - r_l);
+        if (hard_core_radius > 0){
+
+            vec kinetic_energy_contrib = vec(3, fill::zeros);
+            for (int l = 0; l < position.n_cols; l++){
+                if (l != k){
+                    vec r_l = position.col(l);
+                    double r_kl = max(relative_position.col(k)(l), relative_position.col(l)(k));
+                    assert(r_kl != 0);
+                    assert(r_kl > hard_core_radius);
+                    double H_kl = hard_core_radius/(r_kl*r_kl*(r_kl-hard_core_radius));
+                    kinetic_energy_contrib += H_kl*(r_k - r_l);
+                }
             }
-        }
-        vec tmp = {r_k(0), r_k(1), beta*r_k(2)};
-        kinetic_energy += - 4*alpha*dot(tmp, kinetic_energy_contrib);
-        double kinetic_energy_contrib2 = 0.0;
-        for (int i = 0; i < position.n_cols; i++){
-            if (i != k){
-                vec r_i = position.col(i);
-                double r_ki = max(relative_position.col(k)(i), relative_position.col(i)(k));
-                assert(r_ki != 0);
-                assert(r_ki > hard_core_radius);
-                double H_ki = hard_core_radius/(r_ki*r_ki*(r_ki-hard_core_radius));
-                for (int j = 0; j < position.n_cols; j++){
-                    if (j != k){
-                        vec r_j = position.col(j);
-                        double r_kj = max(relative_position.col(k)(j), relative_position.col(j)(k));
-                        assert(r_kj != 0);
-                        assert(r_kj > hard_core_radius);
-                        double H_kj = hard_core_radius/(r_kj*r_kj*(r_kj-hard_core_radius));
-                        kinetic_energy_contrib2 += dot(r_k - r_i, r_k - r_j)*H_kj;
-                    }
-                } 
-                kinetic_energy_contrib2 *= H_ki;               
+            vec tmp = {r_k(0), r_k(1), beta*r_k(2)};
+            kinetic_energy += - 4*alpha*dot(tmp, kinetic_energy_contrib);
+            double kinetic_energy_contrib2 = 0.0;
+            for (int i = 0; i < position.n_cols; i++){
+                if (i != k){
+                    vec r_i = position.col(i);
+                    double r_ki = max(relative_position.col(k)(i), relative_position.col(i)(k));
+                    assert(r_ki != 0);
+                    assert(r_ki > hard_core_radius);
+                    double H_ki = hard_core_radius/(r_ki*r_ki*(r_ki-hard_core_radius));
+                    for (int j = 0; j < position.n_cols; j++){
+                        if (j != k){
+                            vec r_j = position.col(j);
+                            double r_kj = max(relative_position.col(k)(j), relative_position.col(j)(k));
+                            assert(r_kj != 0);
+                            assert(r_kj > hard_core_radius);
+                            double H_kj = hard_core_radius/(r_kj*r_kj*(r_kj-hard_core_radius));
+                            kinetic_energy_contrib2 += dot(r_k - r_i, r_k - r_j)*H_kj;
+                        }
+                    } 
+                    kinetic_energy_contrib2 *= H_ki;               
+                }
             }
-        }
-        kinetic_energy += kinetic_energy_contrib2;
-        for (int l = 0; l < position.n_cols; l++){
-            if (l != k){
-                double r_kl = max(relative_position.col(k)(l), relative_position.col(l)(k));
-                vec r_l = position.col(l);
-                assert(r_kl != 0);
-                assert(r_kl > hard_core_radius);
-                double H_kl = hard_core_radius/(r_kl*(r_kl-hard_core_radius));
-                kinetic_energy -= H_kl*H_kl;
+            kinetic_energy += kinetic_energy_contrib2;
+            for (int l = 0; l < position.n_cols; l++){
+                if (l != k){
+                    double r_kl = max(relative_position.col(k)(l), relative_position.col(l)(k));
+                    vec r_l = position.col(l);
+                    assert(r_kl != 0);
+                    assert(r_kl > hard_core_radius);
+                    double H_kl = hard_core_radius/(r_kl*(r_kl-hard_core_radius));
+                    kinetic_energy -= H_kl*H_kl;
+                }
             }
+            potential_energy += r_k(0)*r_k(0) + r_k(1)*r_k(1) + gamma*gamma*r_k(2)*r_k(2);
+            
         }
-        potential_energy += r_k(0)*r_k(0) + r_k(1)*r_k(1) + gamma*gamma*r_k(2)*r_k(2);
     }
     kinetic_energy *= -0.5;
     potential_energy *= 0.5;
@@ -145,8 +149,8 @@ vec quantum_force_naive(mat& position, mat& relative_position, double alpha, dou
         if (l != particle_index){
             vec r_l = position.col(l);
             double r_kl = max(relative_position.col(particle_index)(l), relative_position.col(l)(particle_index));
-            assert(r_kl != 0);
-            assert(r_kl > hard_core_radius);
+            // assert(r_kl != 0);
+            // assert(r_kl > hard_core_radius);
             double H_kl = hard_core_radius/(r_kl*r_kl*(r_kl-hard_core_radius));
             qf += 2*H_kl*(r_k - r_l);
         }

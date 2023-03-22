@@ -98,7 +98,7 @@ vec VMCWalker::walk(int MC_cycles, string density_filename, string energy_filena
         }
         
         //update values for the energy and the derivative of the wave function
-        new_der_wf = dwf_dalpha(new_position); //update new derivative of wave function
+        new_der_wf = dwf_dalpha(new_position, beta, interactions); //update new derivative of wave function
         energy += new_energy;
         energy_squared += new_energy*new_energy;
 
@@ -126,7 +126,7 @@ vec VMCWalker::walk(int MC_cycles, string density_filename, string energy_filena
     der_wf_energy = der_wf_energy/(MC_cycles);
     double alpha_derivative = 2*(der_wf_energy - der_wf*energy);
     vec result = {energy, energy_variance, alpha_derivative};
-    cout << "fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*MC_cycles) << endl;
+    // cout << "fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*MC_cycles) << endl;
     return result;
 }
 
@@ -134,15 +134,8 @@ vec VMCWalker::walk(int MC_cycles){
     return walk(MC_cycles, "", "");
 }
 
-void VMCWalker::minimize_parameters(int MC_cycles, double learning_rate, int max_iter){
-    //prepare output file
-    string filename;
-    if (importance_sampling){
-        filename = "output/N="+ to_string(N_particles) + "_d=" + to_string(N_dimensions) + "_GD_IS_energy.csv";
-    } 
-    else{
-        filename = "output/N="+ to_string(N_particles) + "_d=" + to_string(N_dimensions) + "_GD_energy.csv";
-    }
+vec VMCWalker::minimize_parameters(int MC_cycles, double learning_rate, int max_iter, string filename){
+
     ofstream ofile;
     ofile.open(filename);
     ofile << "MC,N,d,alpha,energy,variance" << endl;
@@ -161,7 +154,17 @@ void VMCWalker::minimize_parameters(int MC_cycles, double learning_rate, int max
     while (iter < max_iter and abs(alpha_values[iter] - alpha_values[iter - 1]) > 0.00001){ 
         result = walk(MC_cycles);
         alpha = alpha_values[iter] - learning_rate*result[2] + momentum*(alpha_values[iter] - alpha_values[iter-1]);
+        if (abs(alpha - alpha_values[iter]) > 0.05){
+            cout << "Skipped iteration " << iter << endl;
+            cout << "alpha: " << alpha << endl;
+            cout << "gradient: " << result[2] << endl;
+            cout << "energy: " << result[0] << endl;
+            alpha = alpha_values[iter]; //reset alpha
+            //skip iteration if alpha is too large
+            continue;
+        }
         alpha_values.push_back(alpha);
+        // cout << "alpha: " << alpha_values[iter] << endl;
         energy = result[0]; //update new energy
         energy_variance = result[1]; //update energy variance
 
@@ -182,4 +185,21 @@ void VMCWalker::minimize_parameters(int MC_cycles, double learning_rate, int max
         cout << "energy: " << energy << endl;
         cout << "variance: " << energy_variance << endl;
     }
+    vec final_result = vec(2);
+    final_result[0] = alpha_values.back();
+    final_result[1] = iter;
+    return final_result;
+}
+
+
+vec VMCWalker::minimize_parameters(int MC_cycles, double learning_rate, int max_iter){
+    //prepare output file
+    string filename;
+    if (importance_sampling){
+        filename = "output/N="+ to_string(N_particles) + "_d=" + to_string(N_dimensions) + "_GD_IS_energy.csv";
+    } 
+    else{
+        filename = "output/N="+ to_string(N_particles) + "_d=" + to_string(N_dimensions) + "_GD_energy.csv";
+    }
+    return minimize_parameters(MC_cycles, learning_rate, max_iter, filename);
 }

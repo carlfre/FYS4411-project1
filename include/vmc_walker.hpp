@@ -60,15 +60,16 @@ class VMCWalker{
         void set_step_adjustment(bool use_adjustment);
         arma::vec walk(int MC_cycles, std::string density_filename, std::string energy_filename);
         arma::vec walk(int MC_cycles);
-        void minimize_parameters(int MC_cycles, double learning_rate, int max_iter);
+        arma::vec minimize_parameters(int MC_cycles, double learning_rate, int max_iter, std::string filename);
+        arma::vec minimize_parameters(int MC_cycles, double learning_rate, int max_iter);
 
         // initialization.cpp
         void set_initial_state_interaction();
         void set_initial_state_no_interaction();
         void set_initial_state();
-        void burn_in_importance_sampling();
-        void burn_in_brute_force_sampling();
-        void burn_in_no_adjustment();
+        void adjust_timestep_importance_sampling();
+        void adjust_step_brute_force_sampling();
+        void burn_in();
         void initialize();
 
         // sampling.cpp
