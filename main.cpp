@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
         bool interactions = input_data[9];
         int MC_cycles = pow(2, input_data[10]); // NOTICE: base 2 here, to work better with blocking!
         int n_walkers = input_data[11];
-        string energy_filename = "temp_energy_statistics_N=" + to_string(N_particles) + "_d=" + to_string(N_dimensions);
+        string energy_filename = "energy_statistics_N=" + to_string(N_particles) + "_d=" + to_string(N_dimensions);
         if (interactions){
             energy_filename += "_interactions";
         }
@@ -402,7 +402,7 @@ int main(int argc, char *argv[])
                 importance_sampling,
                 numerical_double_derivative,
                 interactions);
-            vec res = walker.minimize_parameters(MC_cycles, learning_rate, max_iterations);
+            vec res = walker.minimize_parameters(MC_cycles, learning_rate, max_iterations, filename);
             results[i] = res;
         }
 
@@ -410,23 +410,9 @@ int main(int argc, char *argv[])
         ofstream ofile;
         ofile.open("output/interactions_gradient_N=" + to_string(N_particles) + ".csv");
         ofile << "alpha,iterations" << endl;
-        for (int i=0; i<10; i++){
+        for (int i=0; i<16; i++){
             ofile << results[i][0] << "," << results[i][1] << endl;
         }
-
-        
-        // int MC_cycles = pow(10, input_data[0]);
-        // int N_particles = input_data[1];
-        // int N_dimensions = input_data[2];
-        // bool importance_sampling = (bool) input_data[3];
-        // double time_step = input_data[4];
-        // double learning_rate = pow(10, input_data[5]);
-        // int max_iter = input_data[6];
-        // bool interactions = true;
-        // double gamma = 2.82843;
-        // double beta = 2.82843;
-        // double hard_core_radius = 0.0043;
-        // minimize_parameters(MC_cycles, -2.0, N_particles, N_dimensions, importance_sampling, time_step, learning_rate, max_iter, interactions, gamma, beta, hard_core_radius);
       }
     else if (task == "parallel"){ // Worth noting: each walker has individual burn-in period.
         double alpha = input_data[0];

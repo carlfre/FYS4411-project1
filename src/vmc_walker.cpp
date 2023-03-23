@@ -54,6 +54,7 @@ vec VMCWalker::walk(int MC_cycles, string density_filename, string energy_filena
 {
     // if density_filename is specified, open a file for tracking positions
     ofstream ofile_density, ofile_energy;
+    ofile_energy << setprecision(15);
     if (density_filename != ""){
         ofile_density.open("output/" + density_filename + ".csv"); 
     }
@@ -151,7 +152,9 @@ vec VMCWalker::minimize_parameters(int MC_cycles, double learning_rate, int max_
     int iter = 1;
     alpha = alpha_values[0] - learning_rate*result[2];
     alpha_values.push_back(alpha);
-    while (iter < max_iter and abs(alpha_values[iter] - alpha_values[iter - 1]) > 0.00001){ 
+    while (iter < max_iter and abs(alpha_values[iter] - alpha_values[iter - 1]) > 0.000001){ 
+    // while (iter < max_iter and abs(result[2]) > 0.01){ 
+
         result = walk(MC_cycles);
         alpha = alpha_values[iter] - learning_rate*result[2] + momentum*(alpha_values[iter] - alpha_values[iter-1]);
         if (abs(alpha - alpha_values[iter]) > 0.05){

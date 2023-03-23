@@ -2,7 +2,7 @@ import numpy as np
 
 
 def block(x):
-    """Function to perform blocking on a data set x. Returns standard error.
+    """Function to perform blocking on a data set x. Returns variance of estimator.
 
     Source:
         Jonsson, Marius (2018). Standard error estimation by an automated blocking method.

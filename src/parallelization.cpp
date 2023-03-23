@@ -91,14 +91,14 @@ vec parallelized_mcmc(
     }
 
     
-    cout.setstate(ios_base::failbit); // Turn off cout
+    // cout.setstate(ios_base::failbit); // Turn off cout
 
     #pragma omp parallel for
     for (int i = 0; i < n_walkers; i++){
         results[i] = walkers[i].walk(cycles_per_walker, density_filenames[i], energy_filenames[i]);
     }
 
-    cout.clear(); // Turn on cout
+    // cout.clear(); // Turn on cout
 
     merge_files(density_filename, n_walkers);
     merge_files(energy_filename, n_walkers);

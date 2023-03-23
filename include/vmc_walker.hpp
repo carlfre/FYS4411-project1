@@ -1,5 +1,6 @@
 #pragma once 
 #include <iostream>
+#include <iomanip> 
 #include <armadillo>
 #include <cmath>
 #include <chrono>

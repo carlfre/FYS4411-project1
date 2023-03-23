@@ -5,8 +5,8 @@ using namespace arma;
 using namespace std;
 
 void VMCWalker::set_initial_state_interaction(){
-    int spread = 50;
-    position = spread*hard_core_radius*(mat(N_dimensions, N_particles).randu() - 0.5); //initialize all particles at random positions
+    int spread = 10;
+    position = spread*hard_core_radius*(mat(N_dimensions, N_particles).randn()); //initialize all particles at random positions
     
     relative_position = mat(N_particles, N_particles).fill(0.0);
     relative_position = trimatl(relative_position, 1); //strict lower triangular matrix to store relative positions
@@ -16,7 +16,7 @@ void VMCWalker::set_initial_state_interaction(){
             double rel_pos = norm(r_i - position.col(j));
             while (rel_pos < hard_core_radius){
                 //if two particles are too close, get new random positions
-                position.col(j) = spread*hard_core_radius*(vec(N_dimensions).randu() - 0.5);
+                position.col(j) = spread*hard_core_radius*vec(N_dimensions).randn();
                 rel_pos = norm(r_i - position.col(j));    
             }
             relative_position(j, i) = rel_pos;
@@ -116,4 +116,12 @@ void VMCWalker::initialize(){
         }
     }
     burn_in();
+    if (adjust_step_automatically){
+        if (importance_sampling){
+            adjust_timestep_importance_sampling();
+        }
+        else{
+            adjust_step_brute_force_sampling();;
+        }
+    }
 }

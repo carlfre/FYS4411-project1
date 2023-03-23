@@ -78,6 +78,7 @@ double local_energy_naive(mat& position, mat& relative_position, double alpha, d
             }
             vec tmp = {r_k(0), r_k(1), beta*r_k(2)};
             kinetic_energy += - 4*alpha*dot(tmp, kinetic_energy_contrib);
+
             double kinetic_energy_contrib2 = 0.0;
             for (int i = 0; i < position.n_cols; i++){
                 if (i != k){
@@ -93,13 +94,14 @@ double local_energy_naive(mat& position, mat& relative_position, double alpha, d
                             assert(r_kj != 0);
                             assert(r_kj > hard_core_radius);
                             double H_kj = hard_core_radius/(r_kj*r_kj*(r_kj-hard_core_radius));
-                            kinetic_energy_contrib2 += dot(r_k - r_i, r_k - r_j)*H_kj;
+                            kinetic_energy_contrib2 += dot(r_k - r_i, r_k - r_j) * H_kj * H_ki;
                         }
                     } 
-                    kinetic_energy_contrib2 *= H_ki;               
+                    // kinetic_energy_contrib2 *= H_ki;               
                 }
             }
             kinetic_energy += kinetic_energy_contrib2;
+            
             for (int l = 0; l < position.n_cols; l++){
                 if (l != k){
                     double r_kl = max(relative_position.col(k)(l), relative_position.col(l)(k));
