@@ -60,8 +60,8 @@ void VMCWalker::adjust_timestep_importance_sampling()
         }
     }
 
-    cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
-    cout << "Final time step: " << time_step << endl;
+    // cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
+    // cout << "Final time step: " << time_step << endl;
 }
 
 void VMCWalker::adjust_step_brute_force_sampling(){

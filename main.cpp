@@ -371,45 +371,68 @@ int main(int argc, char *argv[])
         bool numerical_double_derivative = false;
         bool interactions = true;
         int MC_cycles = pow(10, input_data[9]);
-        double learning_rate = pow(10, input_data[10]);
+        double learning_rate = input_data[10];
         int max_iterations = input_data[11];
 
 
+        int N_averages = 32;
+        int n_cores = 16;
 
         vector<string> filenames = {};
         vector<vec> results = {};
-        for (int i=0; i<10; i++){
+        for (int i=0; i<N_averages; i++){
             string filename = "output/N=" + to_string(N_particles) + "_int_grad_" + to_string(i) + ".csv";
             filenames.push_back(filename);
             results.push_back(vec(2));
             
         }
 
-        #pragma omp parallel for
-        for(int i=0; i<4; i++){
-            string filename = filenames[i];
-            VMCWalker walker(
-                alpha_0,
-                beta,
-                gamma,
-                step,             // for no importance sampling
-                time_step,        // for importance sampling
-                hard_core_radius, // for interactions
-                ndd_h,            // h for finite difference double derivative
-                N_particles,
-                N_dimensions,
-                importance_sampling,
-                numerical_double_derivative,
-                interactions);
-            vec res = walker.minimize_parameters(MC_cycles, learning_rate, max_iterations, filename);
-            results[i] = res;
+        for (int j=0; j<N_averages; j+=n_cores){
+            #pragma omp parallel for
+            for(int i=0; i<n_cores; i++){
+                string filename = filenames[i+j];
+                VMCWalker walker(
+                    alpha_0,
+                    beta,
+                    gamma,
+                    step,             // for no importance sampling
+                    time_step,        // for importance sampling
+                    hard_core_radius, // for interactions
+                    ndd_h,            // h for finite difference double derivative
+                    N_particles,
+                    N_dimensions,
+                    importance_sampling,
+                    numerical_double_derivative,
+                    interactions);
+                vec res = walker.minimize_parameters(MC_cycles, learning_rate, max_iterations, filename);
+                results[i+j] = res;
+            }
         }
+        // #pragma omp parallel for
+        // for(int i=0; i<N_averages; i++){
+        //     string filename = filenames[i];
+        //     VMCWalker walker(
+        //         alpha_0,
+        //         beta,
+        //         gamma,
+        //         step,             // for no importance sampling
+        //         time_step,        // for importance sampling
+        //         hard_core_radius, // for interactions
+        //         ndd_h,            // h for finite difference double derivative
+        //         N_particles,
+        //         N_dimensions,
+        //         importance_sampling,
+        //         numerical_double_derivative,
+        //         interactions);
+        //     vec res = walker.minimize_parameters(MC_cycles, learning_rate, max_iterations, filename);
+        //     results[i] = res;
+        // }
 
         // write to file
         ofstream ofile;
         ofile.open("output/interactions_gradient_N=" + to_string(N_particles) + ".csv");
         ofile << "alpha,iterations" << endl;
-        for (int i=0; i<16; i++){
+        for (int i=0; i<N_averages; i++){
             ofile << results[i][0] << "," << results[i][1] << endl;
         }
       }
