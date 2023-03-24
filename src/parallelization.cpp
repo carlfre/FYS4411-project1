@@ -83,7 +83,6 @@ vec parallelized_mcmc(
             importance_sampling, 
             numerical_double_derivative, 
             interactions);
-
         walkers.push_back(walker);
         density_filenames.push_back(density_filename_i);
         energy_filenames.push_back(energy_filename_i);

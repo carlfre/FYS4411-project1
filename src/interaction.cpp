@@ -151,11 +151,12 @@ vec quantum_force_naive(mat& position, mat& relative_position, double alpha, dou
         if (l != particle_index){
             vec r_l = position.col(l);
             double r_kl = max(relative_position.col(particle_index)(l), relative_position.col(l)(particle_index));
-            // assert(r_kl != 0);
-            // assert(r_kl > hard_core_radius);
-            double H_kl = hard_core_radius/(r_kl*r_kl*(r_kl-hard_core_radius));
+            assert(r_kl != 0);
+            assert(r_kl > hard_core_radius);
+            double H_kl = hard_core_radius/(r_kl*r_kl*(r_kl-hard_core_radius)); 
             qf += 2*H_kl*(r_k - r_l);
         }
     }
+    // cout << "qf: " << qf << endl;
     return qf;
 }

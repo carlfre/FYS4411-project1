@@ -5,8 +5,8 @@ using namespace arma;
 using namespace std;
 
 void VMCWalker::set_initial_state_interaction(){
-    int spread = 10;
-    position = spread*hard_core_radius*(mat(N_dimensions, N_particles).randn()); //initialize all particles at random positions
+    int spread = 100;
+    position = (mat(N_dimensions, N_particles).randn()); //initialize all particles at random positions
     
     relative_position = mat(N_particles, N_particles).fill(0.0);
     relative_position = trimatl(relative_position, 1); //strict lower triangular matrix to store relative positions
@@ -16,7 +16,7 @@ void VMCWalker::set_initial_state_interaction(){
             double rel_pos = norm(r_i - position.col(j));
             while (rel_pos < hard_core_radius){
                 //if two particles are too close, get new random positions
-                position.col(j) = spread*hard_core_radius*vec(N_dimensions).randn();
+                position.col(j) = vec(N_dimensions).randn();
                 rel_pos = norm(r_i - position.col(j));    
             }
             relative_position(j, i) = rel_pos;
@@ -41,8 +41,8 @@ void VMCWalker::set_initial_state(){
 void VMCWalker::adjust_timestep_importance_sampling()
 {
     double fraction = 0.0;
-    int N_equilibration = 1000;
-    while(0.8 > fraction | fraction > 0.9){
+    int N_equilibration = 1'000;
+    while(0.80 > fraction | fraction > 0.90){
         accepted_moves = 0;
         for (int j = 0; j < N_equilibration; j++){
             for (int k = 0; k < N_particles; k++){
@@ -50,18 +50,18 @@ void VMCWalker::adjust_timestep_importance_sampling()
                 }
         }
         fraction = (accepted_moves + 0.0)/(N_particles*N_equilibration);
-        if ( fraction < 0.8){
+        if ( fraction < 0.80){
             //if the acceptance rate is too low, decrease the step size
             time_step *= 0.8;
         }
-        else if (fraction > 0.9){
+        else if (fraction > 0.90){
             //if the acceptance rate is too high, increase the step size
             time_step *= 1.2;
         }
     }
 
-    // cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
-    // cout << "Final time step: " << time_step << endl;
+    cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
+    cout << "Final time step: " << time_step << endl;
 }
 
 void VMCWalker::adjust_step_brute_force_sampling(){
@@ -99,7 +99,7 @@ void VMCWalker::burn_in(){
     }
     double fraction = (accepted_moves + 0.0)/(N_particles*N_equilibration);
 
-    // cout << "Equilibration done" << endl;
+    // cout << "Time step: " << time_step << endl;
     // cout << "Fraction of accepted moves: " << fraction << endl;    
 }
 
@@ -124,4 +124,5 @@ void VMCWalker::initialize(){
             adjust_step_brute_force_sampling();;
         }
     }
+    // cout << "Time step: " << time_step << endl;
 }

@@ -326,12 +326,17 @@ int main(int argc, char *argv[])
         ofile.open(filename);
         ofile << "MC,N,d,alpha,energy,variance" << endl;
 
-        vec alpha_values = linspace(0.1, 1.0, 10);
-        vec step_sizes = step * linspace(0.4, 1.0, 10);
-        vec time_steps = {0.7, 0.7, 0.65, 0.6, 0.5, 0.2, 0.1, 0.07, 0.04, 0.01};
-        // vec time_steps = time_step*linspace(0.5, 1.5, 10);
-        double alpha = 0.5; // TODO: what task should this solve? loop over alpha values? step_sizes?
-        vec result = parallelized_mcmc(
+        vec alpha_values = linspace(0.45, 0.55, 10);
+        // vec step_sizes = step * linspace(0.4, 1.0, 10);
+        // vec time_steps = {0.7, 0.7, 0.65, 0.6, 0.5, 0.2, 0.1, 0.07, 0.04, 0.01};
+        // // vec time_steps = time_step*linspace(0.5, 1.5, 10);
+        // double alpha = 0.5; // TODO: what task should this solve? loop over alpha values? step_sizes?
+        
+        // result.print();
+        int N_alpha = alpha_values.size();
+        for (int i = 0; i < N_alpha; i++){
+            double alpha = alpha_values[i];
+            vec result = parallelized_mcmc(
             alpha,
             beta,
             gamma,
@@ -346,15 +351,9 @@ int main(int argc, char *argv[])
             interactions,
             MC_cycles,
             n_walkers);
-        result.print();
-        // int N_alpha = alpha_values.size();
-        // for (int i = 0; i < N_alpha; i++){
-        //     double alpha = alpha_values[i];
-        //     double step = step_sizes[N_alpha - i - 1];
-        //     double time_step = time_steps[i];
-        //     vec result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, interactions, gamma, beta, hard_core_radius);
-        //     ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << result[0] << "," << result[1] << endl;
-        // }
+            // vec result = monte_carlo(alpha, MC_cycles, step, N_particles, N_dimensions, importance_sampling, time_step, interactions, gamma, beta, hard_core_radius);
+            ofile << MC_cycles << "," <<  N_particles << "," << N_dimensions << "," << alpha << "," << result[0] << "," << result[1] << endl;
+        }
     }
 
       else if(task == "interactions_gradient"){ // TODO: Figure out what's wrong!
@@ -387,7 +386,7 @@ int main(int argc, char *argv[])
         }
 
         #pragma omp parallel for
-        for(int i=0; i<10; i++){
+        for(int i=0; i<4; i++){
             string filename = filenames[i];
             VMCWalker walker(
                 alpha_0,
