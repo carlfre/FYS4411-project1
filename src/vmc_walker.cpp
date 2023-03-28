@@ -107,7 +107,7 @@ vec VMCWalker::walk(int MC_cycles, string density_filename, string energy_filena
         der_wf_energy += new_der_wf*new_energy;
 
         // write all particle positions to file
-        if (density_filename != ""){
+        if (density_filename != "" && j % 10 == 0){
             ofile_density << new_position.t();
         }
         // write energy to file

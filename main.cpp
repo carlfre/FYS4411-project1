@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
         bool interactions = input_data[9];
 
         // int MC_cycles = input_data[10];
-        int MC_cycles = pow(10, input_data[10]);
+        int MC_cycles = pow(2, input_data[10]);
         int n_walkers = input_data[11];
         string density_filename = "density_N=" + to_string(N_particles); // + "_r=" + to_string(hard_core_radius).substr(0, 4)
 
@@ -356,7 +356,7 @@ int main(int argc, char *argv[])
         }
     }
 
-      else if(task == "interactions_gradient"){ // TODO: Figure out what's wrong!
+      else if(task == "interactions_gradient"){ 
 
         double alpha_0 = input_data[0];
         double beta = input_data[1];

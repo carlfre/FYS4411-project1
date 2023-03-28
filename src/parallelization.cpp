@@ -98,7 +98,6 @@ vec parallelized_mcmc(
     }
 
     // cout.clear(); // Turn on cout
-
     merge_files(density_filename, n_walkers);
     merge_files(energy_filename, n_walkers);
 

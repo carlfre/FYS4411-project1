@@ -131,12 +131,14 @@ double probability_ratio_naive(mat& old_position, mat& new_position, mat& relati
                 - (r_k_old(0)*r_k_old(0) + r_k_old(1)*r_k_old(1) + beta*r_k_old(2)*r_k_old(2));
     ratio *= exp(-2*alpha*exponent);
 
-    for (int j = 0; j < old_position.n_cols; j++){
-        if (j != particle_index){
-            double r_old = max(relative_position.col(particle_index)(j), relative_position.col(j)(particle_index));
-            double r_new = max(relative_position_new.col(particle_index)(j), relative_position_new.col(j)(particle_index));
-            double H = r_old*(r_new - hard_core_radius)/(r_new*(r_old - hard_core_radius));
-            ratio *= H*H;
+    if (hard_core_radius > 0){
+        for (int j = 0; j < old_position.n_cols; j++){
+            if (j != particle_index){
+                double r_old = max(relative_position.col(particle_index)(j), relative_position.col(j)(particle_index));
+                double r_new = max(relative_position_new.col(particle_index)(j), relative_position_new.col(j)(particle_index));
+                double H = r_old*(r_new - hard_core_radius)/(r_new*(r_old - hard_core_radius));
+                ratio *= H*H;
+            }
         }
     }
     //cout << "ratio: " << ratio << endl;
@@ -147,14 +149,16 @@ vec quantum_force_naive(mat& position, mat& relative_position, double alpha, dou
     vec r_k = position.col(particle_index);
     vec qf = {r_k[0], r_k[1], beta*r_k[2]};
     qf *= -4*alpha;
-    for (int l = 0; l < position.n_cols; l++){
-        if (l != particle_index){
-            vec r_l = position.col(l);
-            double r_kl = max(relative_position.col(particle_index)(l), relative_position.col(l)(particle_index));
-            assert(r_kl != 0);
-            assert(r_kl > hard_core_radius);
-            double H_kl = hard_core_radius/(r_kl*r_kl*(r_kl-hard_core_radius)); 
-            qf += 2*H_kl*(r_k - r_l);
+    if (hard_core_radius > 0){
+        for (int l = 0; l < position.n_cols; l++){
+            if (l != particle_index){
+                vec r_l = position.col(l);
+                double r_kl = max(relative_position.col(particle_index)(l), relative_position.col(l)(particle_index));
+                // assert(r_kl != 0);
+                // assert(r_kl > hard_core_radius);
+                double H_kl = hard_core_radius/(r_kl*r_kl*(r_kl-hard_core_radius)); 
+                qf += 2*H_kl*(r_k - r_l);
+            }
         }
     }
     // cout << "qf: " << qf << endl;

@@ -70,7 +70,7 @@ void VMCWalker::brute_force_sampling_with_interactions(int k)
     for (int i = 0; i < N_particles; i++ ){
         if (i != k){
             rel_pos = norm(new_position.col(k) - new_position.col(i));
-            if (rel_pos < hard_core_radius){ //if particles are too close, reject move
+            if (rel_pos < hard_core_radius && hard_core_radius > 0){ //if particles are too close, reject move
                 new_position.col(k) = position.col(k); //move particle k back to original position
                 relative_position_new = relative_position;
                 return; //break out of function
