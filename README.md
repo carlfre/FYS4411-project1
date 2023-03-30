@@ -1,6 +1,37 @@
-# FYS4411-project1
+# FYS4411 - Project 1
 
-In this project we use the variational Monte Carlo method to simulate Bose-Einstein condensate in spherical and elliptic potentials and estimate the ground state energy. The main code is written in C++, and uses the Armadillo library for linear algebra. The code is parallelized using OpenMP.
+In this project we use the variational Monte Carlo method to estimate the ground state energy of a gas of weakly interacting bosons in spherical and elliptic potentials. The main code is written in C++, and uses the Armadillo library for linear algebra. The code is parallelized using OpenMP.
+
+## Code structure
+The repository is structured as follows:
+
+├── main.cpp
+├── makefile
+├── configs
+│   ├── analytical.txt
+│   ├── density.txt
+│   ├── gradient.txt
+│   ├── interactions_gradient.txt
+│   ├── interactions.txt
+│   ├── numerical.txt
+│   ├── parallel.txt
+│   ├── statistics.txt
+│   └── timing.txt
+├── include
+│   ├── interaction.hpp
+│   ├── no_interaction.hpp
+│   ├── parallelization.hpp
+│   └── vmc_walker.hpp
+└── src
+    ├── initialization.cpp
+    ├── interaction.cpp
+    ├── no_interaction.cpp
+    ├── parallelization.cpp
+    ├── sampling.cpp
+    ├── statistical_analysis.py
+    └── vmc_walker.cpp
+
+The main.cpp file contains the main function, and calls the functions in the src folder. The configs folder contains the settings for each simulation problem. The include folder contains the header files for the classes used in the code. The src folder contains the implementation of the classes.
 
 ## Usage
 
