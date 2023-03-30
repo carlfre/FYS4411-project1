@@ -92,7 +92,7 @@ vec VMCWalker::walk(int MC_cycles, string density_filename, string energy_filena
             new_energy = local_energy(position, alpha);
         }
         else if(interactions && !numerical_double_derivative){
-            new_energy = local_energy_naive(position, relative_position, alpha, beta, gamma, hard_core_radius); // TODO: Switch to other implementation?
+            new_energy = local_energy_naive(position, relative_position, alpha, beta, gamma, hard_core_radius); 
         }
         else{
             throw "Numerical double derivative + interactions is not implemented";

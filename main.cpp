@@ -53,7 +53,6 @@ int main(int argc, char *argv[])
     }
     myfile.close();
 
-    // TODO: Fix block below
     if (task == "analytical")
     {
         double beta = input_data[0];
@@ -327,12 +326,7 @@ int main(int argc, char *argv[])
         ofile << "MC,N,d,alpha,energy,variance" << endl;
 
         vec alpha_values = linspace(0.45, 0.55, 10);
-        // vec step_sizes = step * linspace(0.4, 1.0, 10);
-        // vec time_steps = {0.7, 0.7, 0.65, 0.6, 0.5, 0.2, 0.1, 0.07, 0.04, 0.01};
-        // // vec time_steps = time_step*linspace(0.5, 1.5, 10);
-        // double alpha = 0.5; // TODO: what task should this solve? loop over alpha values? step_sizes?
-        
-        // result.print();
+
         int N_alpha = alpha_values.size();
         for (int i = 0; i < N_alpha; i++){
             double alpha = alpha_values[i];
@@ -408,25 +402,6 @@ int main(int argc, char *argv[])
                 results[i+j] = res;
             }
         }
-        // #pragma omp parallel for
-        // for(int i=0; i<N_averages; i++){
-        //     string filename = filenames[i];
-        //     VMCWalker walker(
-        //         alpha_0,
-        //         beta,
-        //         gamma,
-        //         step,             // for no importance sampling
-        //         time_step,        // for importance sampling
-        //         hard_core_radius, // for interactions
-        //         ndd_h,            // h for finite difference double derivative
-        //         N_particles,
-        //         N_dimensions,
-        //         importance_sampling,
-        //         numerical_double_derivative,
-        //         interactions);
-        //     vec res = walker.minimize_parameters(MC_cycles, learning_rate, max_iterations, filename);
-        //     results[i] = res;
-        // }
 
         // write to file
         ofstream ofile;
