@@ -1,0 +1,12 @@
+# step (no importance sampling)
+1.0
+# time_step (importance sampling)
+0.1
+# ndd_h 
+0.001
+# N_particles
+500
+# N_dimensions
+3
+# importance_sampling
+1

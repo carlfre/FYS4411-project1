@@ -513,6 +513,78 @@ int main(int argc, char *argv[])
         cout << "Time parallelized: " << t1 / (double)n_averages << " s" << endl;
         cout << "Time serial: " << t2 / (double)n_averages << " s" << endl;
     }
+    else if(task == "timing"){
+        double beta = -1;
+        double gamma = -1;
+        double step = input_data[0];
+        double time_step = input_data[1];
+        double hard_core_radius = -1;
+        double ndd_h = input_data[2]; // h for finite difference double derivative
+        int N_particles = input_data[3];
+        int N_dimensions = input_data[4];
+        bool importance_sampling = input_data[5];
+        bool numerical_double_derivative = true;
+        bool interactions = false;
+        double alpha = 0.8;
+        string filename = "output/timing_comparison.csv";
+        ofstream ofile;
+        ofile.open(filename);
+        vec mc_values = linspace(2, 5, 20);
+        ofile << "MC_cycles,numerical_time,numerical_energy,analytical_time,analytical_energy" << endl;
+        #pragma omp parallel
+        {
+        for (double mc : mc_values){
+            int MC_cycles = pow(10, mc);
+                #pragma omp for
+                for (int run = 0; run < 16; run++){ // average over 16 runs
+                    auto start_num = chrono::high_resolution_clock::now();
+                    // cout << omp_get_num_threads() << endl;
+                    VMCWalker walker_num(
+                        alpha,
+                        beta,
+                        gamma,
+                        step,             // for no importance sampling
+                        time_step,        // for importance sampling
+                        hard_core_radius, // for interactions
+                        ndd_h,            // h for finite difference double derivative
+                        N_particles,
+                        N_dimensions,
+                        true,             // importance sampling
+                        true,             // numerical double derivative
+                        false);           //interactions
+                    vec r_num = walker_num.walk(MC_cycles);
+                    double energy_num = r_num[0];
+
+                    auto finish_num = chrono::high_resolution_clock::now();
+                    chrono::duration<double> elapsed_num = finish_num - start_num;
+
+                    double time_num = elapsed_num.count();
+
+                    auto start_ana = chrono::high_resolution_clock::now();
+                    VMCWalker walker_ana(
+                        alpha,
+                        beta,
+                        gamma,
+                        step,             // for no importance sampling
+                        time_step,        // for importance sampling
+                        hard_core_radius, // for interactions
+                        ndd_h,            // h for finite difference double derivative
+                        N_particles,
+                        N_dimensions,
+                        true,             // importance sampling
+                        false,            // numerical double derivative 
+                        false);           //interactions
+                    vec r_ana = walker_ana.walk(MC_cycles);
+                    double energy_ana = r_ana[0];
+                    auto finish_ana = chrono::high_resolution_clock::now();
+                    chrono::duration<double> elapsed_ana = finish_ana - start_ana;
+
+                    double time_ana = elapsed_ana.count();
+                    ofile << MC_cycles << "," << time_num << "," << energy_num << "," << time_ana << "," << energy_ana << endl;
+            }
+        }
+        }
+    }
     else
     {
         cout << "Unknown task" << endl;
