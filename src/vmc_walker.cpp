@@ -92,7 +92,7 @@ vec VMCWalker::walk(int MC_cycles, string density_filename, string energy_filena
             new_energy = local_energy(position, alpha);
         }
         else if(interactions && !numerical_double_derivative){
-            new_energy = local_energy_naive(position, relative_position, alpha, beta, gamma, hard_core_radius); 
+            new_energy = local_energy_interaction(position, relative_position, alpha, beta, gamma, hard_core_radius); 
         }
         else{
             throw "Numerical double derivative + interactions is not implemented";
@@ -127,7 +127,6 @@ vec VMCWalker::walk(int MC_cycles, string density_filename, string energy_filena
     der_wf_energy = der_wf_energy/(MC_cycles);
     double alpha_derivative = 2*(der_wf_energy - der_wf*energy);
     vec result = {energy, energy_variance, alpha_derivative};
-    // cout << "fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*MC_cycles) << endl;
     return result;
 }
 
@@ -153,7 +152,6 @@ vec VMCWalker::minimize_parameters(int MC_cycles, double learning_rate, int max_
     alpha = alpha_values[0] - learning_rate*result[2];
     alpha_values.push_back(alpha);
     while (iter < max_iter and abs(alpha_values[iter] - alpha_values[iter - 1]) > 0.000001){ 
-    // while (iter < max_iter and abs(result[2]) > 0.01){ 
 
         result = walk(MC_cycles);
         alpha = alpha_values[iter] - learning_rate*result[2] + momentum*(alpha_values[iter] - alpha_values[iter-1]);
@@ -167,7 +165,6 @@ vec VMCWalker::minimize_parameters(int MC_cycles, double learning_rate, int max_
             continue;
         }
         alpha_values.push_back(alpha);
-        // cout << "alpha: " << alpha_values[iter] << endl;
         energy = result[0]; //update new energy
         energy_variance = result[1]; //update energy variance
 

@@ -5,7 +5,6 @@ using namespace arma;
 using namespace std;
 
 void VMCWalker::set_initial_state_interaction(){
-    int spread = 100;
     position = (mat(N_dimensions, N_particles).randn()); //initialize all particles at random positions
     
     relative_position = mat(N_particles, N_particles).fill(0.0);
@@ -60,8 +59,6 @@ void VMCWalker::adjust_timestep_importance_sampling()
         }
     }
 
-    // cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
-    // cout << "Final time step: " << time_step << endl;
 }
 
 void VMCWalker::adjust_step_brute_force_sampling(){
@@ -84,9 +81,6 @@ void VMCWalker::adjust_step_brute_force_sampling(){
             step *= 1.2;
         }
     }
-
-    // cout << "Fraction of accepted moves: " << (accepted_moves + 0.0)/(N_particles*N_equilibration) << endl;    
-    // cout << "Final step: " << step<< endl;
 }
 
 void VMCWalker::burn_in(){
@@ -98,9 +92,6 @@ void VMCWalker::burn_in(){
         }
     }
     double fraction = (accepted_moves + 0.0)/(N_particles*N_equilibration);
-
-    // cout << "Time step: " << time_step << endl;
-    // cout << "Fraction of accepted moves: " << fraction << endl;    
 }
 
 void VMCWalker::initialize(){
@@ -124,5 +115,4 @@ void VMCWalker::initialize(){
             adjust_step_brute_force_sampling();;
         }
     }
-    // cout << "Time step: " << time_step << endl;
 }

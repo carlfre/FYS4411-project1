@@ -52,10 +52,8 @@ def block(x):
 
 
 def main():
-    # filename = input("Enter filename: ")
-    filename = "output/energy_statistics_N=50.csv"
+    filename = input("Enter filename: ")
     data = np.loadtxt(filename)
-    print("Expected value: ", np.mean(data) / 50)
     print("Standard error: ", block(data))
     
 if __name__ == "__main__":

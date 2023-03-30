@@ -9,10 +9,13 @@
 
 #include "../include/vmc_walker.hpp"
 
+/* Merge filenames of form [filename]_1, [filename]_2, [filename]_3, ..., [filename]_n 
+to a file called [filename]*/
 void merge_files(std::string filename, int n_walkers);
 
 
-// TODO: change type to vector
+/* Creates multiple instances of the VMCWalker class, to run parallelized monte carlo computation. 
+Can optionally send in filenames for density problem and energy estimation problem. */
 arma::vec parallelized_mcmc(
     double alpha, 
     double beta,
