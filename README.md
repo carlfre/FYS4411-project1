@@ -5,6 +5,7 @@ In this project we use the variational Monte Carlo method to estimate the ground
 ## Code structure
 The repository is structured as follows:
 
+``` bash
 ├── main.cpp
 ├── makefile
 ├── configs
@@ -30,7 +31,7 @@ The repository is structured as follows:
     ├── sampling.cpp
     ├── statistical_analysis.py
     └── vmc_walker.cpp
-
+```
 The main.cpp file contains the main function, and calls the functions in the src folder. The configs folder contains the settings for each simulation problem. The include folder contains the header files for the classes used in the code. The src folder contains the implementation of the classes.
 
 ## Usage
